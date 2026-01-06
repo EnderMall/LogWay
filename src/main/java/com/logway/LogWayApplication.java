@@ -1,12 +1,10 @@
 package com.logway;
 
-import com.logway.service.DatabaseService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.io.*;
-import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -15,11 +13,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 
 @SpringBootApplication
 public class LogWayApplication {
@@ -52,10 +46,13 @@ public class LogWayApplication {
             throw new RuntimeException(e);
         }
 
-        createDatabase();
 
         SpringApplication.run(LogWayApplication.class, args);
+
+        createDatabase();
     }
+
+
     public static void createDatabase(){
         try {
             List<String> ost = new ArrayList<>();
@@ -70,7 +67,7 @@ public class LogWayApplication {
                     ost.get(0),
                     ost.get(1)
             );
-            String yaml = Files.readString(Paths.get("src/main/resources/application.yml"));
+            String yaml = Files.readString(Paths.get("src/main/resources/application.properties"));
             yaml = yaml.replaceAll(
                     "(localhost:)\\d+(/logway_db)",
                     "$1" +  ost.get(2) + "$2"
@@ -83,7 +80,7 @@ public class LogWayApplication {
                     "(password:\\s*).*",
                     "$1" +  ost.get(1)
             );
-            Files.writeString(Paths.get("src/main/resources/application.yml"), yaml);
+            Files.writeString(Paths.get("src/main/resources/application.properties"), yaml);
 
             System.setProperty("spring.datasource.url",
                     "jdbc:postgresql://localhost:" + ost.get(2) + "/logway_db");
@@ -99,6 +96,8 @@ public class LogWayApplication {
             if (!rs.next()) {
                 stmt.executeUpdate("CREATE DATABASE logway_db");
             }
+            System.out.println("База данных создана");
+
             createTables(conn);
             rs.close();
             conn.close();
@@ -106,8 +105,8 @@ public class LogWayApplication {
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
-
     }
+
     private static void createTables(Connection conn) {
         try {
             Statement stmt = conn.createStatement();
@@ -187,11 +186,11 @@ public class LogWayApplication {
                 stmt.executeUpdate(query);
             }
             stmt.close();
+            System.out.println("Таблицы созданны");
 
         } catch (Exception e) {
             System.err.println("Ошибка при создании таблиц: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
 }
