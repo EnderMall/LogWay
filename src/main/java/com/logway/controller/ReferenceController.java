@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class ReferenceController{
 
     private final AppRepository appRepository;
@@ -23,6 +22,13 @@ public class ReferenceController{
     private final YouTubeVideoRepository videoRepository;
 
 
+    public ReferenceController(AppRepository appRepository,
+                               SiteRepository siteRepository,
+                               YouTubeVideoRepository videoRepository) {
+        this.appRepository = appRepository;
+        this.siteRepository = siteRepository;
+        this.videoRepository = videoRepository;
+    }
 
 
     @GetMapping("/apps")

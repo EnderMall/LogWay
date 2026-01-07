@@ -16,12 +16,21 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sessions")
-@RequiredArgsConstructor
 public class SessionController {
     private final AppSessionRepository appSessionRepository;
     private final PageSessionRepository pageSessionRepository;
     private final ViewSessionRepository viewSessionRepository;
     private final SessionService sessionService;
+
+    public SessionController(AppSessionRepository appSessionRepository,
+                             PageSessionRepository pageSessionRepository,
+                             ViewSessionRepository viewSessionRepository,
+                             SessionService sessionService) {
+        this.appSessionRepository = appSessionRepository;
+        this.pageSessionRepository = pageSessionRepository;
+        this.viewSessionRepository = viewSessionRepository;
+        this.sessionService = sessionService;
+    }
 
     @GetMapping("/app")
     public ResponseEntity<List<AppSession>> getAllAppSessions() {
