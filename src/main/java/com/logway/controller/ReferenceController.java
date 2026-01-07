@@ -7,6 +7,7 @@ import com.logway.repository.AppRepository;
 import com.logway.repository.SiteRepository;
 import com.logway.repository.YouTubeVideoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,9 +43,13 @@ public class ReferenceController{
         return app.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
     @PostMapping("/apps")
     public ResponseEntity<App> createApp(@RequestBody App app) {
+        Optional<App> existing = appRepository.findById(app.getProcessName());
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(existing.get());
+        }
+
         App saved = appRepository.save(app);
         return ResponseEntity.ok(saved);
     }
@@ -53,25 +58,20 @@ public class ReferenceController{
     public ResponseEntity<App> updateApp(
             @PathVariable String id,
             @RequestBody App updatedApp) {
-
-        if (!appRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
+        updatedApp.setProcessName(id);
         App saved = appRepository.save(updatedApp);
         return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/apps/{id}")
     public ResponseEntity<Void> deleteApp(@PathVariable String id) {
-        if (!appRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+        try {
+            appRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.noContent().build();
         }
-
-        appRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
     }
-
 
 
 
@@ -86,6 +86,21 @@ public class ReferenceController{
     }
 
 
+    @PutMapping("/sites/{id}")
+    public ResponseEntity<Site> updateSite(
+            @PathVariable String id,
+            @RequestBody Site updatedSite) {
+        updatedSite.setDomain(id);
+        Site saved = siteRepository.save(updatedSite);
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/sites/{id}")
+    public ResponseEntity<Void> deleteSite(@PathVariable String id) {
+        siteRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
 
 
     @GetMapping("/videos")
@@ -96,5 +111,21 @@ public class ReferenceController{
     @PostMapping("/videos")
     public ResponseEntity<YouTubeVideo> createVideo(@RequestBody YouTubeVideo video) {
         return ResponseEntity.ok(videoRepository.save(video));
+    }
+
+
+    @PutMapping("/videos/{id}")
+    public ResponseEntity<YouTubeVideo> updateVideo(
+            @PathVariable String id,
+            @RequestBody YouTubeVideo updatedVideo) {
+        updatedVideo.setVideoId(id);
+        YouTubeVideo saved = videoRepository.save(updatedVideo);
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/videos/{id}")
+    public ResponseEntity<Void> deleteVideo(@PathVariable String id) {
+        videoRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
