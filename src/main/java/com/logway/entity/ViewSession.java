@@ -34,11 +34,14 @@ public class ViewSession {
     @Column(name = "viewing_time")
     private Integer viewingTime;
 
-    @Column(name = "domain", nullable = false, length = 255)
-    private String domain = "youtube.com";
+
+    @ManyToOne
+    @JoinColumn(name = "domain", nullable = false)
+    private Site site;
 
 
     @ManyToOne
     @JoinColumn(name = "video_id", nullable = false)
     private YouTubeVideo video;
+
 }

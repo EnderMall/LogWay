@@ -1,8 +1,12 @@
 package com.logway.entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -23,4 +27,9 @@ public class YouTubeVideo {
 
     @Column(name = "video_duration",nullable = false)
     private Integer videoDuration;
+
+    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ViewSession> viewSessions = new ArrayList<>();
+
 }

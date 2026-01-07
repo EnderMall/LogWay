@@ -38,4 +38,5 @@ public class AppSession {
     @ManyToOne
     @JoinColumn(name = "process_name", nullable = false)
     private App app;
+
 }

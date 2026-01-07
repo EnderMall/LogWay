@@ -43,4 +43,5 @@ public class PageSession {
     @ManyToOne
     @JoinColumn(name = "browser_name", nullable = false)
     private App browser;
+
 }

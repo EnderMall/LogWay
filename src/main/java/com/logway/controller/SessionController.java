@@ -1,13 +1,11 @@
 package com.logway.controller;
 
+import com.logway.entity.App;
 import com.logway.entity.AppSession;
 import com.logway.entity.PageSession;
 import com.logway.entity.ViewSession;
-import com.logway.repository.AppSessionRepository;
-import com.logway.repository.PageSessionRepository;
-import com.logway.repository.ViewSessionRepository;
+import com.logway.repository.*;
 import com.logway.service.SessionService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,15 +19,18 @@ public class SessionController {
     private final PageSessionRepository pageSessionRepository;
     private final ViewSessionRepository viewSessionRepository;
     private final SessionService sessionService;
+    private final AppRepository appRepository;
+
 
     public SessionController(AppSessionRepository appSessionRepository,
                              PageSessionRepository pageSessionRepository,
                              ViewSessionRepository viewSessionRepository,
-                             SessionService sessionService) {
+                             SessionService sessionService,AppRepository appRepository) {
         this.appSessionRepository = appSessionRepository;
         this.pageSessionRepository = pageSessionRepository;
         this.viewSessionRepository = viewSessionRepository;
         this.sessionService = sessionService;
+        this.appRepository = appRepository;
     }
 
     @GetMapping("/app")
@@ -46,20 +47,22 @@ public class SessionController {
 
     @PostMapping("/app")
     public ResponseEntity<AppSession> createAppSession(@RequestBody AppSession session) {
-        return ResponseEntity.ok(sessionService.saveAppSession(session));
-    }
+        String processName = session.getApp().getProcessName();
+        Optional<App> existingApp = appRepository.findById(processName);
 
-    @PutMapping("/app/{id}")
-    public ResponseEntity<AppSession> updateAppSession(
-            @PathVariable Long id,
-            @RequestBody AppSession updatedSession) {
+        if (existingApp.isEmpty()) {
+            App newApp = new App();
+            newApp.setProcessName( session.getApp().getProcessName());
+            newApp.setBaseName(session.getApp().getBaseName() != null ?
+                    session.getApp().getBaseName() : processName);
 
-        if (!appSessionRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+            App savedApp = appRepository.save(newApp);
+            session.setApp(savedApp);
+        } else {
+            session.setApp(existingApp.get());
         }
-
-        // Просто сохраняем, не устанавливаем ID
-        return ResponseEntity.ok(sessionService.saveAppSession(updatedSession));
+        AppSession saved = sessionService.saveAppSession(session);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/app/{id}")
@@ -89,17 +92,6 @@ public class SessionController {
         return ResponseEntity.ok(sessionService.savePageSession(session));
     }
 
-    @PutMapping("/page/{id}")
-    public ResponseEntity<PageSession> updatePageSession(
-            @PathVariable Long id,
-            @RequestBody PageSession updatedSession) {
-
-        if (!pageSessionRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(sessionService.savePageSession(updatedSession));
-    }
 
     @DeleteMapping("/page/{id}")
     public ResponseEntity<Void> deletePageSession(@PathVariable Long id) {
@@ -128,17 +120,6 @@ public class SessionController {
         return ResponseEntity.ok(sessionService.saveViewSession(session));
     }
 
-    @PutMapping("/view/{id}")
-    public ResponseEntity<ViewSession> updateViewSession(
-            @PathVariable Long id,
-            @RequestBody ViewSession updatedSession) {
-
-        if (!viewSessionRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(sessionService.saveViewSession(updatedSession));
-    }
 
     @DeleteMapping("/view/{id}")
     public ResponseEntity<Void> deleteViewSession(@PathVariable Long id) {
