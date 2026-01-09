@@ -1,7 +1,3 @@
-function truncate(text, length) {
-    if (!text) return '';
-    return text.length > length ? text.substring(0, length) + '...' : text;
-}
 
 function formatTime(minutes) {
     const hours = Math.floor(minutes / 60);
@@ -258,12 +254,12 @@ function changeTable() {
                 <div class="form-group">
                     <label for="page_activation_date">Дата открытия</label>
                     <input type="date" id="page_activation_date" name="activation_date"
-                           class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                           class="form-input" value="${new Date().toISOString().split('T')[0]}" required>
                 </div>
                 <div class="form-group">
                     <label for="page_activation_time">Время открытия</label>
                     <input type="time" id="page_activation_time" name="activation_time"
-                           class="form-input" value="${new Date().toTimeString().substring(0,5)}">
+                           class="form-input" value="${new Date().toTimeString().substring(0,5)}" required>
                 </div>
                 <div class="form-group">
                     <label for="shutdown_date">Дата закрытия (если есть)</label>
@@ -286,22 +282,22 @@ function changeTable() {
                 <div class="form-group">
                     <label for="view_domain">Домен сайта</label>
                     <input type="text" id="view_domain" name="domain"
-                           placeholder="youtube.com" class="form-input" value="youtube.com">
+                           placeholder="youtube.com" class="form-input" required>
                 </div>
                 <div class="form-group">
                     <label for="viewing_time">Время просмотра (сек)</label>
                     <input type="number" id="viewing_time" name="viewing_time"
-                           placeholder="300" class="form-input" min="1">
+                           placeholder="300" class="form-input" required min="1">
                 </div>
                 <div class="form-group">
                     <label for="view_activation_date">Дата начала просмотра</label>
                     <input type="date" id="view_activation_date" name="activation_date"
-                           class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                           class="form-input" value="${new Date().toISOString().split('T')[0]}" required>
                 </div>
                 <div class="form-group">
                     <label for="view_activation_time">Время начала просмотра</label>
                     <input type="time" id="view_activation_time" name="activation_time"
-                           class="form-input" value="${new Date().toTimeString().substring(0,5)}">
+                           class="form-input" value="${new Date().toTimeString().substring(0,5)}" required>
                 </div>
                 <div class="form-group">
                     <label for="shutdown_date">Дата окончания просмотра (если есть)</label>
@@ -377,10 +373,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-// ============ ТАБЛИЦА ПРИЛОЖЕНИЙ ============
-
-// Загрузить таблицу
 async function loadAppTable(event) {
     document.querySelector('.app-active').style.display = 'flex';
     document.querySelector('.app-active-compact').style.display = 'none';
@@ -418,8 +410,8 @@ async function loadAppTable(event) {
 
            html += `
            <tr>
-               <td title="${appName}">${truncate(appName, 15)}</td>
-               <td title="${session.windowTitle}">${truncate(session.windowTitle, 25)}</td>
+               <td title="${appName}">${appName}</td>
+               <td title="${session.windowTitle}">${session.windowTitle}</td>
                <td>${session.activationDate}</td>
                <td>${openTime}</td>
                <td>${session.shutdownDate}</td>
@@ -449,7 +441,6 @@ async function loadAppTable(event) {
 
 
 
-// Загрузить статистику по времени приложений (все приложения, даже с нулевым временем)
 async function loadAppTimeStats(event) {
     document.querySelector('.app-time').style.display = 'flex';
     document.querySelector('.app-time-compact').style.display = 'none';
@@ -463,18 +454,18 @@ async function loadAppTimeStats(event) {
             btn.innerHTML = '⏳';
         }
 
-        // 1. Загружаем ВСЕ приложения
+
         const appsResponse = await fetch('/api/apps');
         const allApps = await appsResponse.json();
 
-        // 2. Загружаем сессии приложений
+
         const sessionsResponse = await fetch('/api/sessions/app');
         const sessions = await sessionsResponse.json();
 
-        // 3. Создаем мапу для быстрого доступа к статистике
+
         const appStatsMap = {};
 
-        // 4. Инициализируем все приложения с нулевым временем
+
         allApps.forEach(app => {
             appStatsMap[app.processName] = {
                 appName: app.processName,
@@ -484,11 +475,11 @@ async function loadAppTimeStats(event) {
             };
         });
 
-        // 5. Рассчитываем статистику по сессиям
+
         sessions.forEach(session => {
             const appName = session.app?.processName;
 
-            // Если приложение не в списке всех приложений, добавляем его
+
             if (!appStatsMap[appName]) {
                 appStatsMap[appName] = {
                     appName: appName,
@@ -498,18 +489,18 @@ async function loadAppTimeStats(event) {
                 };
             }
 
-            // Увеличиваем счетчик сессий
+
             appStatsMap[appName].sessionCount++;
 
-            // Рассчитываем время сессии
+
             const sessionMinutes = calculateSessionDuration(session);
             appStatsMap[appName].totalMinutes += sessionMinutes;
         });
 
-        // 6. Преобразуем в массив и сортируем
+
         const appStatsArray = Object.values(appStatsMap);
 
-        // Сортируем по общему времени (убывание), потом по имени
+
         appStatsArray.sort((a, b) => {
             if (b.totalMinutes !== a.totalMinutes) {
                 return b.totalMinutes - a.totalMinutes;
@@ -517,7 +508,7 @@ async function loadAppTimeStats(event) {
             return a.appName.localeCompare(b.appName);
         });
 
-        // 7. Отображаем статистику
+
         displayAppStatistics(appStatsArray);
 
         if (btn) {
@@ -537,14 +528,14 @@ async function loadAppTimeStats(event) {
     }
 }
 
-// Рассчитать статистику по приложениям
+
 function calculateAppStatistics(sessions) {
     const appStats = {};
 
     sessions.forEach(session => {
         const appName = session.app?.processName;
 
-        // Инициализируем объект для приложения если его нет
+
         if (!appStats[appName]) {
             appStats[appName] = {
                 appName: appName,
@@ -553,10 +544,10 @@ function calculateAppStatistics(sessions) {
             };
         }
 
-        // Увеличиваем счетчик сессий
+
         appStats[appName].sessionCount++;
 
-        // Рассчитываем время сессии
+
         const sessionMinutes = calculateSessionDuration(session);
         appStats[appName].totalMinutes += sessionMinutes;
     });
@@ -564,18 +555,18 @@ function calculateAppStatistics(sessions) {
     return appStats;
 }
 
-// Рассчитать длительность сессии в минутах
+
 function calculateSessionDuration(session) {
-    // Если есть дата/время закрытия, рассчитываем разницу
+
     if (session.shutdownDate && session.shutdownTime) {
         try {
             const start = new Date(`${session.activationDate}T${session.activationTime}`);
             const end = new Date(`${session.shutdownDate}T${session.shutdownTime}`);
 
-            // Разница в миллисекундах
+
             const diffMs = end - start;
 
-            // Преобразуем в минуты
+
             return Math.max(1, Math.round(diffMs / (1000 * 60)));
         } catch (error) {
             console.warn('Ошибка расчета времени сессии:', error);
@@ -584,7 +575,7 @@ function calculateSessionDuration(session) {
     return 0;
 }
 
-// Отобразить статистику приложений
+
 function displayAppStatistics(appStatsArray) {
     const tbody = document.getElementById('appStatsBody');
 
@@ -595,7 +586,7 @@ function displayAppStatistics(appStatsArray) {
 
         html += `
         <tr>
-            <td title="${stat.appName}">${truncate(stat.appName, 20)}</td>
+            <td title="${stat.appName}">${stat.appName}</td>
             <td style="text-align: center;">${stat.sessionCount}</td>
             <td style="text-align: right;">${timeFormatted}</td>
         </tr>
@@ -606,7 +597,7 @@ function displayAppStatistics(appStatsArray) {
 }
 
 
-// Загрузить таблицу сайтов
+
 async function loadSiteTable(event) {
     document.querySelector('.site-active').style.display = 'flex';
     document.querySelector('.site-active-compact').style.display = 'none';
@@ -628,14 +619,14 @@ async function loadSiteTable(event) {
             return;
         }
 
-        // Сортируем новые сверху
+
         sessions.sort((a, b) => {
             const dateA = new Date(`${a.activationDate}T${a.activationTime}`);
             const dateB = new Date(`${b.activationDate}T${b.activationTime}`);
             return dateB - dateA;
         });
 
-        // Отображаем все записи
+
         let html = '';
         sessions.forEach(session => {
             const siteDomain = session.site?.domain;
@@ -646,12 +637,11 @@ async function loadSiteTable(event) {
 
             html += `
             <tr>
-                <td title="${siteDomain}">${truncate(siteDomain, 20)}</td>
-                <td title="${browserName}">${truncate(browserName, 15)}</td>
-                <td title="${session.pageTitle}">${truncate(session.pageTitle, 25)}</td>
+                <td title="${siteDomain}">${siteDomain}</td>
+                <td title="${session.pageTitle}">${session.pageTitle}</td>
                 <td>${session.activationDate}</td>
                 <td>${openTime}</td>
-                <td>${session.shutdownDate || ''}</td>
+                <td>${session.shutdownDate}</td>
                 <td>${closeTime}</td>
             </tr>
             `;
@@ -676,8 +666,7 @@ async function loadSiteTable(event) {
     }
 }
 
-// Загрузить статистику по времени сайтов
-// Загрузить статистику по времени сайтов (все сайты, даже с нулевым временем)
+
 async function loadSiteTimeStats(event) {
     document.querySelector('.site-time').style.display = 'flex';
     document.querySelector('.site-time-compact').style.display = 'none';
@@ -691,18 +680,14 @@ async function loadSiteTimeStats(event) {
             btn.innerHTML = '⏳';
         }
 
-        // 1. Загружаем ВСЕ сайты
         const sitesResponse = await fetch('/api/sites');
         const allSites = await sitesResponse.json();
 
-        // 2. Загружаем сессии сайтов
         const sessionsResponse = await fetch('/api/sessions/page');
         const sessions = await sessionsResponse.json();
 
-        // 3. Создаем мапу для статистики
         const siteStatsMap = {};
 
-        // 4. Инициализируем все сайты с нулевым временем
         allSites.forEach(site => {
             siteStatsMap[site.domain] = {
                 siteName: site.domain,
@@ -711,11 +696,9 @@ async function loadSiteTimeStats(event) {
             };
         });
 
-        // 5. Рассчитываем статистику по сессиям
         sessions.forEach(session => {
             const siteDomain = session.site?.domain;
 
-            // Если сайт не в списке всех сайтов, добавляем его
             if (!siteStatsMap[siteDomain]) {
                 siteStatsMap[siteDomain] = {
                     siteName: siteDomain,
@@ -726,7 +709,6 @@ async function loadSiteTimeStats(event) {
 
             siteStatsMap[siteDomain].visitCount++;
 
-            // Рассчитываем время посещения
             if (session.shutdownDate && session.shutdownTime) {
                 try {
                     const start = new Date(`${session.activationDate}T${session.activationTime}`);
@@ -742,10 +724,8 @@ async function loadSiteTimeStats(event) {
             }
         });
 
-        // 6. Преобразуем в массив и сортируем
         const sortedStats = Object.values(siteStatsMap);
 
-        // Сортируем по общему времени (убывание), потом по имени
         sortedStats.sort((a, b) => {
             if (b.totalMinutes !== a.totalMinutes) {
                 return b.totalMinutes - a.totalMinutes;
@@ -753,23 +733,17 @@ async function loadSiteTimeStats(event) {
             return a.siteName.localeCompare(b.siteName);
         });
 
-        // 7. Отображаем статистику
         let html = '';
         sortedStats.forEach(stat => {
-            const siteDomain = session.site?.domain;
-            const browserName = session.browser?.processName;
+            const siteName = stat.siteName;
+            const visitCount = stat.visitCount;
+            const totalMinutes = stat.totalMinutes;
 
-            const openTime = session.activationTime.substring(0, 5);
-            const closeTime = session.shutdownTime;
             html += `
             <tr>
-                <td title="${siteDomain}">${truncate(siteDomain, 20)}</td>
-                <td title="${browserName}">${truncate(browserName, 15)}</td>
-                <td title="${session.pageTitle}">${truncate(session.pageTitle, 25)}</td>
-                <td>${session.activationDate}</td>
-                <td>${openTime}</td>
-                <td>${session.shutdownDate}</td>
-                <td>${closeTime}</td>
+                <td title="${siteName}">${siteName}</td>
+                <td>${visitCount}</td>
+                <td>${totalMinutes}</td>
             </tr>
             `;
         });
@@ -793,9 +767,6 @@ async function loadSiteTimeStats(event) {
     }
 }
 
-// ============ YOUTUBE ============
-
-// Загрузить таблицу YouTube
 async function loadYouTubeTable(event) {
     document.querySelector('.youtube-active').style.display = 'flex';
     document.querySelector('.youtube-active-compact').style.display = 'none';
@@ -817,14 +788,14 @@ async function loadYouTubeTable(event) {
             return;
         }
 
-        // Сортируем новые сверху
+
         views.sort((a, b) => {
             const dateA = new Date(`${a.activationDate}T${a.activationTime}`);
             const dateB = new Date(`${b.activationDate}T${b.activationTime}`);
             return dateB - dateA;
         });
 
-        // Загружаем информацию о видео для отображения названий
+
         let html = '';
         for (const view of views) {
             const videoTitle = view.video?.title ;
@@ -838,14 +809,14 @@ async function loadYouTubeTable(event) {
             const endTime = view.shutdownTime;
             const endViewedTime = view.shutdownDate;
 
-            // Процент просмотра
+
             const percentViewed = videoDuration > 0 ? Math.round((viewedTime / videoDuration) * 100) : 0;
 
             html += `
             <tr>
-                <td title="${videoTitle}">${truncate(videoTitle, 25)}</td>
-                <td title="${videoAuthor}">${truncate(videoAuthor, 15)}</td>
-                <td title="${siteDomain}">${truncate(siteDomain, 15)}</td>
+                <td title="${videoTitle}">${videoTitle}</td>
+                <td title="${videoAuthor}">${videoAuthor}</td>
+                <td title="${siteDomain}">${siteDomain}</td>
                 <td>${formatVideoTime(viewedTime)} (${percentViewed}%)</td>
                 <td>${formatVideoTime(videoDuration)}</td>
                 <td>${view.activationDate}</td>
@@ -912,8 +883,8 @@ async function loadAppTableCompact(event) {
 
             html += `
             <tr>
-                <td title="${appName}">${truncate(appName, 15)}</td>
-                <td title="${session.windowTitle}">${truncate(session.windowTitle, 15)}</td>
+                <td title="${appName}">${appName}</td>
+                <td title="${session.windowTitle}">${session.windowTitle}</td>
                 <td>${session.activationDate}</td>
                 <td>${openTime}</td>
                 <td>${session.shutdownDate || ''}</td>
@@ -948,7 +919,7 @@ async function loadAppTimeStatsCompact(event) {
             return;
         }
 
-        // Рассчитываем статистику
+
         const appStats = {};
         sessions.forEach(session => {
             const appName = session.app?.processName || 'Неизвестно';
@@ -973,7 +944,7 @@ async function loadAppTimeStatsCompact(event) {
             }
         });
 
-        // Сортируем и берем топ 5
+
         const top5 = Object.values(appStats)
             .sort((a, b) => b.totalMinutes - a.totalMinutes)
             .slice(0, 5);
@@ -983,7 +954,7 @@ async function loadAppTimeStatsCompact(event) {
             const timeFormatted = formatTime(stat.totalMinutes);
             html += `
             <tr>
-                <td title="${stat.appName}">${truncate(stat.appName, 15)}</td>
+                <td title="${stat.appName}">${stat.appName}</td>
                 <td style="text-align: center;">${stat.sessionCount}</td>
                 <td style="text-align: right;">${timeFormatted}</td>
             </tr>
@@ -1016,7 +987,7 @@ async function loadSiteTableCompact(event) {
             return;
         }
 
-        // Сортируем новые сверху и берем только 5
+
         const top5Sessions = sessions.sort((a, b) => {
             const dateA = new Date(`${a.activationDate}T${a.activationTime}`);
             const dateB = new Date(`${b.activationDate}T${b.activationTime}`);
@@ -1030,8 +1001,8 @@ async function loadSiteTableCompact(event) {
 
             html += `
             <tr>
-                <td title="${siteDomain}">${truncate(siteDomain, 15)}</td>
-                <td title="${session.pageTitle}">${truncate(session.pageTitle, 15)}</td>
+                <td title="${siteDomain}">${siteDomain}</td>
+                <td title="${session.pageTitle}">${session.pageTitle}</td>
                 <td>${session.activationDate}</td>
                 <td>${openTime}</td>
                 <td>${session.shutdownDate}</td>
@@ -1057,18 +1028,17 @@ async function loadSiteTimeStatsCompact(event) {
     try {
         tbody.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
 
-        // Загружаем ВСЕ сайты
+
         const sitesResponse = await fetch('/api/sites');
         const allSites = await sitesResponse.json();
 
-        // Загружаем сессии сайтов
+
         const sessionsResponse = await fetch('/api/sessions/page');
         const sessions = await sessionsResponse.json();
 
-        // Создаем мапу для статистики
+
         const siteStatsMap = {};
 
-        // 1. Инициализируем все сайты с нулевым временем
         allSites.forEach(site => {
             siteStatsMap[site.domain] = {
                 siteName: site.domain,
@@ -1077,11 +1047,11 @@ async function loadSiteTimeStatsCompact(event) {
             };
         });
 
-        // 2. Рассчитываем статистику по сессиям
+
         sessions.forEach(session => {
             const siteDomain = session.site?.domain;
 
-            // Если сайт не в списке всех сайтов, добавляем его
+
             if (!siteStatsMap[siteDomain]) {
                 siteStatsMap[siteDomain] = {
                     siteName: siteDomain,
@@ -1107,10 +1077,10 @@ async function loadSiteTimeStatsCompact(event) {
             }
         });
 
-        // 3. Преобразуем в массив и сортируем
+
         const sortedStats = Object.values(siteStatsMap);
 
-        // Сортируем по общему времени (убывание), потом по имени
+
         sortedStats.sort((a, b) => {
             if (b.totalMinutes !== a.totalMinutes) {
                 return b.totalMinutes - a.totalMinutes;
@@ -1118,16 +1088,15 @@ async function loadSiteTimeStatsCompact(event) {
             return a.siteName.localeCompare(b.siteName);
         });
 
-        // 4. Берем топ 5
         const top5 = sortedStats.slice(0, 5);
 
-        // 5. Отображаем статистику
+
         let html = '';
         top5.forEach(stat => {
             const timeFormatted = formatTime(stat.totalMinutes);
             html += `
             <tr>
-                <td title="${stat.siteName}">${truncate(stat.siteName, 15)}</td>
+                <td title="${stat.siteName}">${stat.siteName}</td>
                 <td style="text-align: center;">${stat.visitCount}</td>
                 <td style="text-align: right;">${timeFormatted}</td>
             </tr>
@@ -1158,7 +1127,7 @@ async function loadYouTubeTableCompact(event) {
             return;
         }
 
-        // Сортируем новые сверху и берем только 5
+
         const top5Views = views.sort((a, b) => {
             const dateA = new Date(`${a.activationDate}T${a.activationTime}`);
             const dateB = new Date(`${b.activationDate}T${b.activationTime}`);
@@ -1178,14 +1147,14 @@ async function loadYouTubeTableCompact(event) {
              const endTime = view.shutdownTime;
              const endViewedTime = view.shutdownDate;
 
-             // Процент просмотра
+
              const percentViewed = videoDuration > 0 ? Math.round((viewedTime / videoDuration) * 100) : 0;
 
              html += `
              <tr>
-                 <td title="${videoTitle}">${truncate(videoTitle, 25)}</td>
-                 <td title="${videoAuthor}">${truncate(videoAuthor, 15)}</td>
-                 <td title="${siteDomain}">${truncate(siteDomain, 15)}</td>
+                 <td title="${videoTitle}">${videoTitle}</td>
+                 <td title="${videoAuthor}">${videoAuthor}</td>
+                 <td title="${siteDomain}">${siteDomain}</td>
                  <td>${formatVideoTime(viewedTime)} (${percentViewed}%)</td>
                  <td>${formatVideoTime(videoDuration)}</td>
                  <td>${view.activationDate}</td>
@@ -1207,19 +1176,189 @@ async function loadYouTubeTableCompact(event) {
 }
 
 
+async function addTemplateData() {
+    if (!confirm('Добавить шаблонные данные? Это создаст тестовые записи.')) {
+        return;
+    }
 
-// ============ ИНИЦИАЛИЗАЦИЯ ============
+    const originalText = document.querySelector('#openModal1 h4').textContent;
+    document.querySelector('#openModal1 h4').textContent = 'Добавление...';
+
+    try {
+
+        const apps = [
+            { processName: 'chrome.exe', baseName: 'Google Chrome' },
+            { processName: 'firefox.exe', baseName: 'Mozilla Firefox' },
+            { processName: 'msedge.exe', baseName: 'Microsoft Edge' },
+            { processName: 'code.exe', baseName: 'Visual Studio Code' },
+            { processName: 'telegram.exe', baseName: 'Telegram' },
+            { processName: 'notepad.exe', baseName: 'Блокнот' },
+            { processName: 'explorer.exe', baseName: 'Проводник Windows' },
+            { processName: 'pycharm.exe', baseName: 'PyCharm' },
+            { processName: 'spotify.exe', baseName: 'Spotify' }
+        ];
+
+        for (const app of apps) {
+            await fetch('/api/apps', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(app)
+            });
+        }
+
+
+        const sites = [
+            { domain: 'youtube.com' },
+            { domain: 'google.com' },
+            { domain: 'github.com' },
+            { domain: 'stackoverflow.com' },
+            { domain: 'vk.com' },
+            { domain: 'habr.com' },
+            { domain: 'reddit.com' }
+        ];
+
+        for (const site of sites) {
+            await fetch('/api/sites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(site)
+            });
+        }
+
+
+        const videos = [
+            { videoId: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', author: 'Rick Astley', videoDuration: 213 },
+            { videoId: 'jNQXAC9IVRw', title: 'Me at the zoo', author: 'jawed', videoDuration: 19 },
+            { videoId: '9bZkp7q19f0', title: 'Gangnam Style', author: 'psy', videoDuration: 252 },
+            { videoId: 'kJQP7kiw5Fk', title: 'Despacito', author: 'Luis Fonsi', videoDuration: 282 },
+            { videoId: 'fJ9rUzIMcZQ', title: 'Bohemian Rhapsody', author: 'Queen Official', videoDuration: 354 },
+            { videoId: 'LeAltgu_pbM', title: 'Learn SQL in 1 Hour', author: 'Programming Guru', videoDuration: 3725 },
+            { videoId: 'hY7m5jjJ9mM', title: 'CATS will make you LAUGH', author: 'Funny Cats Compilation', videoDuration: 486 }
+        ];
+
+        for (const video of videos) {
+            await fetch('/api/videos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(video)
+            });
+        }
+
+
+        const appSessions = [
+
+            { activationDate: '2025-11-16', activationTime: '09:00:00', shutdownDate: '2025-11-16', shutdownTime: '12:30:00', app: { processName: 'chrome.exe' }, windowTitle: 'Google Chrome' },
+            { activationDate: '2025-11-16', activationTime: '10:15:00', shutdownDate: '2025-11-16', shutdownTime: '11:45:00', app: { processName: 'code.exe' }, windowTitle: 'project.py - Visual Studio Code' },
+            { activationDate: '2025-11-16', activationTime: '14:00:00', shutdownDate: '2025-11-16', shutdownTime: '18:20:00', app: { processName: 'chrome.exe' }, windowTitle: 'YouTube' },
+            { activationDate: '2025-11-16', activationTime: '16:30:00', shutdownDate: '2025-11-16', shutdownTime: '17:00:00', app: { processName: 'telegram.exe' }, windowTitle: 'Telegram' },
+            { activationDate: '2025-11-16', activationTime: '19:00:00', shutdownDate: '2025-11-16', shutdownTime: '22:00:00', app: { processName: 'chrome.exe' }, windowTitle: 'GitHub' },
+
+
+            { activationDate: '2025-11-15', activationTime: '08:45:00', shutdownDate: '2025-11-15', shutdownTime: '17:30:00', app: { processName: 'chrome.exe' }, windowTitle: 'Google Chrome' },
+            { activationDate: '2025-11-15', activationTime: '09:30:00', shutdownDate: '2025-11-15', shutdownTime: '16:45:00', app: { processName: 'code.exe' }, windowTitle: 'database.sql - Visual Studio Code' },
+            { activationDate: '2025-11-15', activationTime: '13:00:00', shutdownDate: '2025-11-15', shutdownTime: '14:30:00', app: { processName: 'spotify.exe' }, windowTitle: 'Spotify' },
+            { activationDate: '2025-11-15', activationTime: '19:00:00', shutdownDate: '2025-11-15', shutdownTime: '22:15:00', app: { processName: 'chrome.exe' }, windowTitle: 'YouTube' },
+            { activationDate: '2025-11-15', activationTime: '20:00:00', shutdownDate: '2025-11-15', shutdownTime: '21:30:00', app: { processName: 'pycharm.exe' }, windowTitle: 'PyCharm' },
+
+
+            { activationDate: '2025-11-14', activationTime: '10:00:00', shutdownDate: '2025-11-14', shutdownTime: '18:00:00', app: { processName: 'chrome.exe' }, windowTitle: 'Google Chrome' },
+            { activationDate: '2025-11-13', activationTime: '11:00:00', shutdownDate: '2025-11-13', shutdownTime: '17:00:00', app: { processName: 'code.exe' }, windowTitle: 'main.py - Visual Studio Code' },
+            { activationDate: '2025-11-12', activationTime: '09:30:00', shutdownDate: '2025-11-12', shutdownTime: '15:45:00', app: { processName: 'msedge.exe' }, windowTitle: 'Microsoft Edge' },
+            { activationDate: '2025-11-11', activationTime: '14:00:00', shutdownDate: '2025-11-11', shutdownTime: '16:30:00', app: { processName: 'pycharm.exe' }, windowTitle: 'PyCharm' },
+            { activationDate: '2025-11-10', activationTime: '08:00:00', shutdownDate: '2025-11-10', shutdownTime: '19:00:00', app: { processName: 'chrome.exe' }, windowTitle: 'Работа' }
+        ];
+
+        for (const session of appSessions) {
+            await fetch('/api/sessions/app', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(session)
+            });
+        }
+
+
+        const viewSessions = [
+
+            { activationDate: '2025-11-16', activationTime: '14:05:00', shutdownDate: '2025-11-16', shutdownTime: '14:08:00', video: { videoId: 'jNQXAC9IVRw' }, viewingTime: 180, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-16', activationTime: '14:15:00', shutdownDate: '2025-11-16', shutdownTime: '14:20:00', video: { videoId: 'fJ9rUzIMcZQ' }, viewingTime: 300, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-16', activationTime: '16:45:00', shutdownDate: '2025-11-16', shutdownTime: '17:50:00', video: { videoId: 'LeAltgu_pbM' }, viewingTime: 3900, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-16', activationTime: '21:00:00', shutdownDate: '2025-11-16', shutdownTime: '21:45:00', video: { videoId: 'hY7m5jjJ9mM' }, viewingTime: 2700, site: { domain: 'youtube.com' } },
+
+
+            { activationDate: '2025-11-15', activationTime: '19:30:00', shutdownDate: '2025-11-15', shutdownTime: '19:35:00', video: { videoId: 'dQw4w9WgXcQ' }, viewingTime: 213, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-15', activationTime: '20:00:00', shutdownDate: '2025-11-15', shutdownTime: '20:12:00', video: { videoId: '9bZkp7q19f0' }, viewingTime: 720, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-15', activationTime: '21:00:00', shutdownDate: '2025-11-15', shutdownTime: '21:48:00', video: { videoId: 'kJQP7kiw5Fk' }, viewingTime: 2880, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-15', activationTime: '22:00:00', shutdownDate: '2025-11-15', shutdownTime: '22:30:00', video: { videoId: 'fJ9rUzIMcZQ' }, viewingTime: 1800, site: { domain: 'youtube.com' } },
+
+
+            { activationDate: '2025-11-14', activationTime: '15:00:00', shutdownDate: '2025-11-14', shutdownTime: '16:05:00', video: { videoId: 'LeAltgu_pbM' }, viewingTime: 3900, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-13', activationTime: '16:00:00', shutdownDate: '2025-11-13', shutdownTime: '16:45:00', video: { videoId: 'hY7m5jjJ9mM' }, viewingTime: 2700, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-12', activationTime: '13:00:00', shutdownDate: '2025-11-12', shutdownTime: '14:30:00', video: { videoId: 'LeAltgu_pbM' }, viewingTime: 5400, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-11', activationTime: '18:00:00', shutdownDate: '2025-11-11', shutdownTime: '19:15:00', video: { videoId: 'fJ9rUzIMcZQ' }, viewingTime: 4500, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-10', activationTime: '20:00:00', shutdownDate: '2025-11-10', shutdownTime: '20:40:00', video: { videoId: '9bZkp7q19f0' }, viewingTime: 2400, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-11-09', activationTime: '17:00:00', shutdownDate: '2025-11-09', shutdownTime: '17:55:00', video: { videoId: 'kJQP7kiw5Fk' }, viewingTime: 3300, site: { domain: 'youtube.com' } },
+            { activationDate: '2025-10-20', activationTime: '19:00:00', shutdownDate: '2025-10-20', shutdownTime: '20:10:00', video: { videoId: 'LeAltgu_pbM' }, viewingTime: 4200, site: { domain: 'youtube.com' } }
+        ];
+
+        for (const session of viewSessions) {
+            await fetch('/api/sessions/view', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(session)
+            });
+        }
+
+
+        const pageSessions = [
+            { activationDate: '2025-11-16', activationTime: '09:05:00', shutdownDate: '2025-11-16', shutdownTime: '09:15:00', site: { domain: 'google.com' }, pageTitle: 'Google', browser: { processName: 'chrome.exe' } },
+            { activationDate: '2025-11-16', activationTime: '09:20:00', shutdownDate: '2025-11-16', shutdownTime: '10:00:00', site: { domain: 'stackoverflow.com' }, pageTitle: 'SQL questions - Stack Overflow', browser: { processName: 'chrome.exe' } },
+            { activationDate: '2025-11-16', activationTime: '14:10:00', shutdownDate: '2025-11-16', shutdownTime: '14:30:00', site: { domain: 'github.com' }, pageTitle: 'GitHub', browser: { processName: 'chrome.exe' } },
+            { activationDate: '2025-11-15', activationTime: '10:00:00', shutdownDate: '2025-11-15', shutdownTime: '10:30:00', site: { domain: 'habr.com' }, pageTitle: 'Habr', browser: { processName: 'chrome.exe' } },
+            { activationDate: '2025-11-14', activationTime: '11:00:00', shutdownDate: '2025-11-14', shutdownTime: '11:45:00', site: { domain: 'reddit.com' }, pageTitle: 'Reddit', browser: { processName: 'msedge.exe' } },
+            { activationDate: '2025-11-13', activationTime: '12:00:00', shutdownDate: '2025-11-13', shutdownTime: '13:00:00', site: { domain: 'vk.com' }, pageTitle: 'VK', browser: { processName: 'chrome.exe' } }
+        ];
+
+        for (const session of pageSessions) {
+            await fetch('/api/sessions/page', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(session)
+            });
+        }
+
+
+
+        if (typeof loadAppTable === 'function') loadAppTable();
+        if (typeof loadSiteTable === 'function') loadSiteTable();
+        if (typeof loadYouTubeTable === 'function') loadYouTubeTable();
+        if (typeof loadAppTimeStats === 'function') loadAppTimeStats();
+        if (typeof loadSiteTimeStats === 'function') loadSiteTimeStats();
+
+    } catch (error) {
+        console.error('Ошибка при добавлении данных:', error);
+        alert('❌ Ошибка: ' + error.message);
+    } finally {
+        document.querySelector('#openModal1 h4').textContent = originalText;
+    }
+}
+
+
+
+
 
 document.addEventListener('DOMContentLoaded', function(event) {
     console.log('Страница загружена, инициализация...');
+    const addTemplateBtn = document.getElementById('openModal1');
 
-    // Инициализируем модальное окно
+    if (addTemplateBtn) {
+        addTemplateBtn.addEventListener('click', addTemplateData);
+    }
     if (typeof initModalHandlers === 'function') {
         initModalHandlers();
     }
 
 
-    // Загружаем все данные
+
     loadAppTable();
     loadAppTimeStats();
     loadSiteTable();
@@ -1230,14 +1369,426 @@ document.addEventListener('DOMContentLoaded', function(event) {
     console.log('Все блоки инициализированы');
 });
 
-// ============ ЭКСПОРТ ФУНКЦИЙ ============
+
+document.addEventListener('DOMContentLoaded', function() {
+    const openDeleteModalBtn = document.getElementById('openDeleteModal');
+    const deleteCancelBtn = document.getElementById('deleteCancelBtn');
+    const deleteModal = document.getElementById('deleteModal');
+    const tableSelect = document.getElementById('deleteTableSelect');
+    const idInput = document.getElementById('idInput');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deletePreview = document.getElementById('deletePreview');
+    const previewText = document.getElementById('previewText');
+    const generalWarning = document.getElementById('generalWarning');
+
+    // Открытие модального окна
+    if (openDeleteModalBtn) {
+        openDeleteModalBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'flex';
+            // Сброс формы
+            if (tableSelect) tableSelect.value = '';
+            if (idInput) idInput.value = '';
+            updateDeleteUI();
+        });
+    }
+
+    // Закрытие модального окна
+    if (deleteCancelBtn) {
+        deleteCancelBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'none';
+        });
+    }
+
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+    });
+
+    // Слушатель изменения таблицы
+    if (tableSelect) {
+        tableSelect.addEventListener('change', function() {
+            updateDeleteUI();
+        });
+    }
+
+    // Слушатель изменения ID
+    if (idInput) {
+        idInput.addEventListener('input', function() {
+            updateDeleteUI();
+        });
+    }
+
+    // Кнопка удаления
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function() {
+            const selectedTable = tableSelect ? tableSelect.value : '';
+            const id = idInput ? idInput.value.trim() : '';
+
+            if (!selectedTable) {
+                alert('❌ Пожалуйста, выберите таблицу!');
+                return;
+            }
+
+            // Получаем тип операции
+            const operationType = getOperationType(selectedTable, id);
+            const confirmMessage = getConfirmMessage(selectedTable, id, operationType);
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            // Блокируем кнопку
+            deleteBtn.textContent = 'Удаление...';
+            deleteBtn.disabled = true;
+
+            try {
+                const result = await performDelete(selectedTable, id, operationType);
+                alert(result.success ? '✅ ' + result.message : '❌ ' + result.message);
+
+                if (result.success) {
+                    deleteModal.style.display = 'none';
+                    // Обновляем страницу если нужно
+                    if (selectedTable.includes('_sessions')) {
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+                alert('❌ Ошибка: ' + (error.message || 'Неизвестная ошибка'));
+            } finally {
+                deleteBtn.textContent = 'Удалить';
+                deleteBtn.disabled = false;
+            }
+        });
+    }
+});
+
+// Определяем тип операции
+function getOperationType(selectedTable, id) {
+    if (selectedTable === 'ALL_TABLES') return 'ALL_TABLES';
+    if (!id) return 'ALL_FROM_TABLE';
+    return 'SINGLE_RECORD';
+}
+
+// Получаем сообщение для подтверждения
+function getConfirmMessage(selectedTable, id, operationType) {
+    const tableNames = {
+        'apps': 'Приложения',
+        'sites': 'Сайты',
+        'videos': 'Видео',
+        'app_sessions': 'Сессии приложений',
+        'page_sessions': 'Сессии страниц',
+        'view_sessions': 'Сессии просмотров',
+        'ALL_TABLES': 'ВСЕ ТАБЛИЦЫ'
+    };
+
+    switch(operationType) {
+        case 'ALL_TABLES':
+            return `⚠️ ВНИМАНИЕ!\n\nВы собираетесь удалить ВСЕ данные из ВСЕХ таблиц:\n` +
+                   `• Все приложения\n• Все сайты\n• Все видео\n` +
+                   `• Все сессии приложений\n• Все сессии страниц\n• Все сессии просмотров\n\n` +
+                   `Это действие НЕОБРАТИМО!\n\nПродолжить?`;
+
+        case 'ALL_FROM_TABLE':
+            return `Вы собираетесь удалить ВСЕ записи из таблицы "${tableNames[selectedTable]}".\n\n` +
+                   `Это действие НЕОБРАТИМО!\n\nПродолжить?`;
+
+        case 'SINGLE_RECORD':
+            return `Удалить запись с ID "${id}" из таблицы "${tableNames[selectedTable]}"?`;
+
+        default:
+            return 'Вы уверены?';
+    }
+}
+
+// Обновление UI
+function updateDeleteUI() {
+    const tableSelect = document.getElementById('deleteTableSelect');
+    const idInput = document.getElementById('idInput');
+    const deleteSpecificSection = document.getElementById('deleteSpecificSection');
+    const deleteAllSection = document.getElementById('deleteAllSection');
+    const generalWarning = document.getElementById('generalWarning');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deletePreview = document.getElementById('deletePreview');
+
+    const selectedValue = tableSelect ? tableSelect.value : '';
+    const id = idInput ? idInput.value.trim() : '';
+
+    // Показываем/скрываем секции
+    if (selectedValue === 'ALL_TABLES') {
+        deleteSpecificSection.style.display = 'none';
+        deleteAllSection.style.display = 'block';
+        if (generalWarning) generalWarning.style.display = 'block';
+        if (deleteBtn) deleteBtn.disabled = false;
+        if (deletePreview) deletePreview.style.display = 'none';
+    } else if (selectedValue) {
+        deleteSpecificSection.style.display = 'block';
+        deleteAllSection.style.display = 'none';
+
+        // Устанавливаем подсказку в placeholder
+        if (idInput) {
+            const placeholders = {
+                'app_sessions': 'Введите ID сессии (число)',
+                'page_sessions': 'Введите ID сессии (число)',
+                'view_sessions': 'Введите ID сессии (число)',
+                'apps': 'Введите имя процесса (chrome.exe)',
+                'sites': 'Введите домен (youtube.com)',
+                'videos': 'Введите ID видео (dQw4w9WgXcQ)'
+            };
+            idInput.placeholder = placeholders[selectedValue] || 'Введите ID';
+        }
+
+        if (generalWarning) {
+            generalWarning.style.display = id ? 'none' : 'block';
+        }
+
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+        }
+
+        // Обновляем предпросмотр
+        updateDeletePreview(selectedValue, id);
+    } else {
+        deleteSpecificSection.style.display = 'none';
+        deleteAllSection.style.display = 'none';
+        if (generalWarning) generalWarning.style.display = 'none';
+        if (deleteBtn) deleteBtn.disabled = true;
+        if (deletePreview) deletePreview.style.display = 'none';
+    }
+}
+
+// Обновление предпросмотра удаления
+async function updateDeletePreview(tableName, id) {
+    const deletePreview = document.getElementById('deletePreview');
+    const previewText = document.getElementById('previewText');
+
+    if (!deletePreview || !previewText) return;
+
+    if (!tableName || tableName === 'ALL_TABLES') {
+        deletePreview.style.display = 'none';
+        return;
+    }
+
+    try {
+        if (!id) {
+            // Предпросмотр удаления ВСЕХ записей из таблицы
+            const count = await getRecordCount(tableName);
+            previewText.innerHTML = `
+                <strong>Будет удалено: ${count} записей</strong><br>
+                <small>Из таблицы: ${tableName}</small>
+            `;
+            deletePreview.style.display = 'block';
+        } else {
+            // Предпросмотр удаления конкретной записи
+            const record = await getRecordInfo(tableName, id);
+            if (record) {
+                previewText.innerHTML = `
+                    <strong>Будет удалена 1 запись:</strong><br>
+                    <small>ID: ${id}</small><br>
+                    <pre style="font-size: 12px; margin-top: 10px;">${JSON.stringify(record, null, 2)}</pre>
+                `;
+            } else {
+                previewText.innerHTML = `❌ Запись с ID "${id}" не найдена`;
+            }
+            deletePreview.style.display = 'block';
+        }
+    } catch (error) {
+        previewText.innerHTML = '⚠️ Не удалось загрузить информацию';
+        deletePreview.style.display = 'block';
+    }
+}
+
+// Получение количества записей
+async function getRecordCount(tableName) {
+    try {
+        let endpoint;
+        switch(tableName) {
+            case 'app_sessions': endpoint = '/api/sessions/app'; break;
+            case 'page_sessions': endpoint = '/api/sessions/page'; break;
+            case 'view_sessions': endpoint = '/api/sessions/view'; break;
+            case 'apps': endpoint = '/api/apps'; break;
+            case 'sites': endpoint = '/api/sites'; break;
+            case 'videos': endpoint = '/api/videos'; break;
+            default: return 0;
+        }
+
+        const response = await fetch(endpoint);
+        if (response.ok) {
+            const data = await response.json();
+            return data.length;
+        }
+        return 0;
+    } catch (error) {
+        console.error('Ошибка получения количества записей:', error);
+        return 0;
+    }
+}
+
+// Получение информации о записи
+async function getRecordInfo(tableName, id) {
+    try {
+        let endpoint;
+        switch(tableName) {
+            case 'app_sessions': endpoint = `/api/sessions/app/${id}`; break;
+            case 'page_sessions': endpoint = `/api/sessions/page/${id}`; break;
+            case 'view_sessions': endpoint = `/api/sessions/view/${id}`; break;
+            case 'apps': endpoint = `/api/apps/${id}`; break;
+            case 'sites': endpoint = `/api/sites/${id}`; break;
+            case 'videos': endpoint = `/api/videos/${id}`; break;
+            default: return null;
+        }
+
+        const response = await fetch(endpoint);
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error('Ошибка получения информации о записи:', error);
+        return null;
+    }
+}
+
+// Выполнение удаления
+async function performDelete(tableName, id, operationType) {
+    try {
+        switch(operationType) {
+            case 'ALL_TABLES':
+                await clearAllTables();
+                return {
+                    success: true,
+                    message: 'Все таблицы успешно очищены'
+                };
+
+            case 'ALL_FROM_TABLE':
+                await clearTable(tableName);
+                return {
+                    success: true,
+                    message: `Все записи удалены из таблицы ${tableName}`
+                };
+
+            case 'SINGLE_RECORD':
+                await deleteSingleRecord(tableName, id);
+                return {
+                    success: true,
+                    message: `Запись "${id}" удалена из таблицы ${tableName}`
+                };
+
+            default:
+                throw new Error('Неизвестный тип операции');
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: error.message || 'Ошибка при удалении'
+        };
+    }
+}
+
+// Удаление одной записи
+async function deleteSingleRecord(tableName, id) {
+    let endpoint;
+
+    switch(tableName) {
+        case 'app_sessions': endpoint = `/api/sessions/app/${id}`; break;
+        case 'page_sessions': endpoint = `/api/sessions/page/${id}`; break;
+        case 'view_sessions': endpoint = `/api/sessions/view/${id}`; break;
+        case 'apps': endpoint = `/api/apps/${id}`; break;
+        case 'sites': endpoint = `/api/sites/${id}`; break;
+        case 'videos': endpoint = `/api/videos/${id}`; break;
+        default: throw new Error(`Неизвестная таблица: ${tableName}`);
+    }
+
+    const response = await fetch(endpoint, { method: 'DELETE' });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Ошибка ${response.status}`);
+    }
+}
+
+// Очистка всей таблицы
+async function clearTable(tableName) {
+    try {
+        switch(tableName) {
+            case 'view_sessions':
+                const viewSessions = await fetch('/api/sessions/view').then(r => r.json());
+                for (const session of viewSessions) {
+                    await fetch(`/api/sessions/view/${session.id}`, { method: 'DELETE' });
+                }
+                break;
+
+            case 'page_sessions':
+                const pageSessions = await fetch('/api/sessions/page').then(r => r.json());
+                for (const session of pageSessions) {
+                    await fetch(`/api/sessions/page/${session.id}`, { method: 'DELETE' });
+                }
+                break;
+
+            case 'app_sessions':
+                const appSessions = await fetch('/api/sessions/app').then(r => r.json());
+                for (const session of appSessions) {
+                    await fetch(`/api/sessions/app/${session.id}`, { method: 'DELETE' });
+                }
+                break;
+
+            case 'videos':
+                const videos = await fetch('/api/videos').then(r => r.json());
+                for (const video of videos) {
+                    await fetch(`/api/videos/${video.videoId}`, { method: 'DELETE' });
+                }
+                break;
+
+            case 'sites':
+                const sites = await fetch('/api/sites').then(r => r.json());
+                for (const site of sites) {
+                    await fetch(`/api/sites/${site.domain}`, { method: 'DELETE' });
+                }
+                break;
+
+            case 'apps':
+                const apps = await fetch('/api/apps').then(r => r.json());
+                for (const app of apps) {
+                    await fetch(`/api/apps/${app.processName}`, { method: 'DELETE' });
+                }
+                break;
+        }
+
+    } catch (error) {
+        throw new Error(`Ошибка очистки таблицы ${tableName}: ${error.message}`);
+    }
+}
+
+// Очистка всех таблиц
+async function clearAllTables() {
+    const tables = ['view_sessions', 'page_sessions', 'app_sessions', 'videos', 'sites', 'apps'];
+    const errors = [];
+
+    for (const table of tables) {
+        try {
+            await clearTable(table);
+        } catch (error) {
+            errors.push(`${table}: ${error.message}`);
+            // Продолжаем очистку остальных таблиц
+        }
+    }
+
+    if (errors.length > 0) {
+        throw new Error(`Ошибки при очистке: ${errors.join('; ')}`);
+    }
+}
+
+// Функция changeDeleteTable для HTML (оставляем для совместимости)
+function changeDeleteTable() {
+    updateDeleteUI();
+}
 
 window.loadAppTable = loadAppTable;
 window.loadAppTimeStats = loadAppTimeStats;
 window.loadSiteTable = loadSiteTable;
 window.loadSiteTimeStats = loadSiteTimeStats;
 window.loadYouTubeTable = loadYouTubeTable;
-window.toggleCompactTable = toggleCompactTable;
 window.loadAppTableCompact = loadAppTableCompact;
 window.loadAppTimeStatsCompact = loadAppTimeStatsCompact;
 window.loadSiteTableCompact = loadSiteTableCompact;

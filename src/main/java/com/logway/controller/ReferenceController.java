@@ -16,11 +16,20 @@ public class ReferenceController{
     private final AppRepository appRepository;
     private final SiteRepository siteRepository;
     private final YouTubeVideoRepository videoRepository;
+    private final AppSessionRepository appSessionRepository;
+    private final PageSessionRepository pageSessionRepository;
+    private final ViewSessionRepository viewSessionRepository;
 
 
     public ReferenceController(AppRepository appRepository,
                              SiteRepository siteRepository,
-                             YouTubeVideoRepository videoRepository) {
+                             YouTubeVideoRepository videoRepository,
+                               AppSessionRepository appSessionRepository,
+                               PageSessionRepository pageSessionRepository,
+                               ViewSessionRepository viewSessionRepository) {
+        this.appSessionRepository = appSessionRepository;
+        this.pageSessionRepository = pageSessionRepository;
+        this.viewSessionRepository = viewSessionRepository;
         this.appRepository = appRepository;
         this.siteRepository = siteRepository;
         this.videoRepository = videoRepository;
@@ -60,14 +69,27 @@ public class ReferenceController{
 
     @DeleteMapping("/apps/{id}")
     @Transactional
-    public ResponseEntity<Void> deleteApp(@PathVariable String id) {
+    public ResponseEntity<?> deleteApp(@PathVariable String id) {
         try {
-            appRepository.deleteById(id); // Все сессии удалятся автоматически!
+            List<AppSession> appSessions = appSessionRepository.findByAppProcessName(id);
+            if (!appSessions.isEmpty()) {
+                return ResponseEntity.status(409)
+                        .body("Нельзя удалить приложение. Существуют связанные сессии: " + appSessions.size());
+            }
+
+            List<PageSession> pageSessions = pageSessionRepository.findByBrowserProcessName(id);
+            if (!pageSessions.isEmpty()) {
+                return ResponseEntity.status(409)
+                        .body("Нельзя удалить приложение. Используется как браузер: " + pageSessions.size());
+            }
+
+            appRepository.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.notFound().build();
         }
     }
+
 
 
 
@@ -98,8 +120,19 @@ public class ReferenceController{
 
     @DeleteMapping("/sites/{id}")
     @Transactional
-    public ResponseEntity<Void> deleteSite(@PathVariable String id) {
+    public ResponseEntity<?> deleteSite(@PathVariable String id) {
         try {
+            List<PageSession> pageSessions = pageSessionRepository.findBySiteDomain(id);
+            if (!pageSessions.isEmpty()) {
+                return ResponseEntity.status(409)
+                        .body("Нельзя удалить сайт. Существуют сессии страниц: " + pageSessions.size());
+            }
+            List<ViewSession> viewSessions = viewSessionRepository.findBySiteDomain(id);
+            if (!viewSessions.isEmpty()) {
+                return ResponseEntity.status(409)
+                        .body("Нельзя удалить сайт. Существуют сессии просмотра: " + viewSessions.size());
+            }
+
             siteRepository.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (EmptyResultDataAccessException e) {
@@ -137,8 +170,14 @@ public class ReferenceController{
 
     @DeleteMapping("/videos/{id}")
     @Transactional
-    public ResponseEntity<Void> deleteVideo(@PathVariable String id) {
+    public ResponseEntity<?> deleteVideo(@PathVariable String id) {
         try {
+            List<ViewSession> viewSessions = viewSessionRepository.findByVideoId(id);
+            if (!viewSessions.isEmpty()) {
+                return ResponseEntity.status(409)
+                        .body("Нельзя удалить видео. Существуют сессии просмотра: " + viewSessions.size());
+            }
+
             videoRepository.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (EmptyResultDataAccessException e) {

@@ -46,10 +46,12 @@ public class LogWayApplication {
             throw new RuntimeException(e);
         }
 
+        createDatabase();
 
         SpringApplication.run(LogWayApplication.class, args);
 
-        createDatabase();
+        System.out.print("\n\n\n\nРазделитель\n\n\n\n");
+
     }
 
 
