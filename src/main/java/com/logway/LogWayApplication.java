@@ -1,9 +1,11 @@
 package com.logway;
 
+import com.sun.tools.javac.Main;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import javax.sound.sampled.Port;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -50,7 +52,8 @@ public class LogWayApplication {
 
         SpringApplication.run(LogWayApplication.class, args);
 
-        System.out.print("\n\n\n\nРазделитель\n\n\n\n");
+        System.out.print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        System.out.print("Сайт приложения открыт по адресу localhost:"+System.getProperty("Port"));
 
     }
 
@@ -89,7 +92,7 @@ public class LogWayApplication {
             System.setProperty("spring.datasource.username", ost.get(0));
             System.setProperty("spring.datasource.password", ost.get(1));
             System.setProperty("spring.datasource.driver-class-name", "org.postgresql.Driver");
-
+            System.setProperty("Port",ost.get(2));
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(
                     "SELECT 1 FROM pg_database WHERE datname = 'logway_db'"

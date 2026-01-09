@@ -22,15 +22,30 @@ async function saveData() {
     const form = document.getElementById('dataForm');
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
+    const countKeys = Object.keys(data).count;
 
-    if (!table || Object.keys(data).length === 0) {
-        alert('Выберите таблицу и заполните поля');
-        return;
-    }
+     const saveBtn = document.getElementById('saveBtn');
+     if (saveBtn) {
+         saveBtn.disabled = true;
+         saveBtn.textContent = 'Добавление...';
+     }
+     for (const [key, value] of Object.entries(data)) {
+         if (value && value.includes(' ')) {
+             alert(`❌ Поле "${key}" содержит пробелы`);
+             closeDataModal();
+             return;
+         }
+     }
+     for (const [key, value] of Object.entries(data)) {
+              if (!value) {
+                  alert(`❌ Поле "${key}" пусто!`);
+                  closeDataModal();
+                  return;
+              }
+          }
 
     try {
         let endpoint, body;
-
         switch(table) {
             case 'apps':
                 endpoint = '/api/apps';
@@ -100,18 +115,85 @@ async function saveData() {
             body: JSON.stringify(body)
         });
         
-        if (response.ok) {
-            closeDataModal();
-        } else {
-            const error = await response.json();
-            alert('Ошибка при добавлении данных: ' + (error.message || response.statusText));
+         if (response.ok) {
+
+                alert('✅ Данные успешно добавлены!');
+                closeDataModal();
+
+                setTimeout(() => {
+                    if (typeof loadAppTable === 'function' && table === 'app_sessions') {
+                        loadAppTable();
+                    }
+                    if (typeof loadSiteTable === 'function' && table === 'page_sessions') {
+                        loadSiteTable();
+                    }
+                    if (typeof loadYouTubeTable === 'function' && table === 'view_sessions') {
+                        loadYouTubeTable();
+                    }
+                }, 500);
+
+            } else {
+                let errorMessage = 'Ошибка при добавлении данных';
+
+                try {
+                    const errorData = await response.json();
+                    console.error('Ошибка сервера:', errorData);
+
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+
+                        if (errorMessage.toLowerCase().includes('уже существует') ||
+                            errorMessage.toLowerCase().includes('already exists') ||
+                            errorMessage.toLowerCase().includes('duplicate')) {
+                            errorMessage = '❌ Такая запись уже существует в базе данных!';
+                        }
+
+                    } else if (errorData.error) {
+                        errorMessage = errorData.error;
+                    }
+
+                } catch (jsonError) {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = `Ошибка ${response.status}: ${errorText}`;
+                    } else {
+                        errorMessage = `Ошибка ${response.status}: ${response.statusText}`;
+                    }
+                }
+
+                alert(`❌ ${errorMessage}`);
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Добавить';
+                }
+            }
+
+        } catch (error) {
+            console.error('Ошибка при добавлении данных:', error);
+
+            let errorMessage = 'Ошибка при добавлении данных';
+            if (error.message) {
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = '❌ Не удалось подключиться к серверу. Проверьте соединение.';
+                } else {
+                    errorMessage = `❌ ${error.message}`;
+                }
+            }
+
+            alert(errorMessage);
+
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Добавить';
+            }
+        } finally {
+            if (saveBtn && !saveBtn.disabled) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Добавить';
+            }
         }
-    } catch (error) {
-        alert('Ошибка при добавлении данных: ' + error.message);
-        console.error(error);
     }
-}
-// Показать модалку
+
 function showDataModal() {
     console.log('showDataModal called');
     document.getElementById('dataModal').style.display = 'flex';
@@ -1370,56 +1452,110 @@ document.addEventListener('DOMContentLoaded', function(event) {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+// ===== МОДАЛКА УДАЛЕНИЯ (ПОЛНЫЙ КОД С ВЫБОРОМ) =====
 document.addEventListener('DOMContentLoaded', function() {
+    // Элементы модалки
     const openDeleteModalBtn = document.getElementById('openDeleteModal');
-    const deleteCancelBtn = document.getElementById('deleteCancelBtn');
     const deleteModal = document.getElementById('deleteModal');
+    const deleteCancelBtn = document.getElementById('deleteCancelBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
     const tableSelect = document.getElementById('deleteTableSelect');
     const idInput = document.getElementById('idInput');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const deletePreview = document.getElementById('deletePreview');
-    const previewText = document.getElementById('previewText');
+    const deleteSpecificSection = document.getElementById('deleteSpecificSection');
+    const deleteAllSection = document.getElementById('deleteAllSection');
     const generalWarning = document.getElementById('generalWarning');
 
-    // Открытие модального окна
+    // 1. Открытие модалки
     if (openDeleteModalBtn) {
         openDeleteModalBtn.addEventListener('click', function() {
-            deleteModal.style.display = 'flex';
-            // Сброс формы
-            if (tableSelect) tableSelect.value = '';
-            if (idInput) idInput.value = '';
-            updateDeleteUI();
+            if (deleteModal) {
+                deleteModal.style.display = 'flex';
+                // Сброс формы
+                if (tableSelect) tableSelect.value = '';
+                if (idInput) idInput.value = '';
+                updateDeleteUI();
+            }
         });
     }
 
-    // Закрытие модального окна
+    // 2. Закрытие модалки
+    function closeDeleteModal() {
+        if (deleteModal) deleteModal.style.display = 'none';
+    }
+
     if (deleteCancelBtn) {
-        deleteCancelBtn.addEventListener('click', function() {
-            deleteModal.style.display = 'none';
+        deleteCancelBtn.addEventListener('click', closeDeleteModal);
+    }
+
+    // Закрытие по клику вне модалки
+    if (deleteModal) {
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === deleteModal) closeDeleteModal();
         });
     }
 
-    deleteModal.addEventListener('click', function(e) {
-        if (e.target === deleteModal) {
-            deleteModal.style.display = 'none';
-        }
-    });
-
-    // Слушатель изменения таблицы
+    // 3. Обновление UI при выборе таблицы
     if (tableSelect) {
-        tableSelect.addEventListener('change', function() {
-            updateDeleteUI();
-        });
+        tableSelect.addEventListener('change', updateDeleteUI);
     }
 
-    // Слушатель изменения ID
     if (idInput) {
-        idInput.addEventListener('input', function() {
-            updateDeleteUI();
-        });
+        idInput.addEventListener('input', updateDeleteUI);
     }
 
-    // Кнопка удаления
+    function updateDeleteUI() {
+        const selectedValue = tableSelect ? tableSelect.value : '';
+        const id = idInput ? idInput.value.trim() : '';
+
+        // Показываем/скрываем секции
+        if (selectedValue === 'ALL_TABLES') {
+            if (deleteSpecificSection) deleteSpecificSection.style.display = 'none';
+            if (deleteAllSection) deleteAllSection.style.display = 'block';
+            if (generalWarning) generalWarning.style.display = 'block';
+            if (deleteBtn) deleteBtn.disabled = false;
+        } else if (selectedValue) {
+            if (deleteSpecificSection) deleteSpecificSection.style.display = 'block';
+            if (deleteAllSection) deleteAllSection.style.display = 'none';
+
+            // Устанавливаем подсказку в placeholder
+            if (idInput) {
+                const placeholders = {
+                    'app_sessions': 'Введите ID сессии (число)',
+                    'page_sessions': 'Введите ID сессии (число)',
+                    'view_sessions': 'Введите ID сессии (число)',
+                    'apps': 'Введите имя процесса (chrome.exe)',
+                    'sites': 'Введите домен (youtube.com)',
+                    'videos': 'Введите ID видео (dQw4w9WgXcQ)'
+                };
+                idInput.placeholder = placeholders[selectedValue] || 'Введите ID';
+            }
+
+            if (generalWarning) {
+                generalWarning.style.display = id ? 'none' : 'block';
+            }
+
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+            }
+        } else {
+            if (deleteSpecificSection) deleteSpecificSection.style.display = 'none';
+            if (deleteAllSection) deleteAllSection.style.display = 'none';
+            if (generalWarning) generalWarning.style.display = 'none';
+            if (deleteBtn) deleteBtn.disabled = true;
+        }
+    }
+
+    // 4. Обработчик удаления
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async function() {
             const selectedTable = tableSelect ? tableSelect.value : '';
@@ -1439,15 +1575,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Блокируем кнопку
-            deleteBtn.textContent = 'Удаление...';
             deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Удаление...';
 
             try {
                 const result = await performDelete(selectedTable, id, operationType);
                 alert(result.success ? '✅ ' + result.message : '❌ ' + result.message);
 
                 if (result.success) {
-                    deleteModal.style.display = 'none';
+                    closeDeleteModal();
                     // Обновляем страницу если нужно
                     if (selectedTable.includes('_sessions')) {
                         setTimeout(() => location.reload(), 1000);
@@ -1457,331 +1593,173 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Ошибка удаления:', error);
                 alert('❌ Ошибка: ' + (error.message || 'Неизвестная ошибка'));
             } finally {
-                deleteBtn.textContent = 'Удалить';
                 deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Удалить';
             }
         });
     }
-});
 
-// Определяем тип операции
-function getOperationType(selectedTable, id) {
-    if (selectedTable === 'ALL_TABLES') return 'ALL_TABLES';
-    if (!id) return 'ALL_FROM_TABLE';
-    return 'SINGLE_RECORD';
-}
+    // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
-// Получаем сообщение для подтверждения
-function getConfirmMessage(selectedTable, id, operationType) {
-    const tableNames = {
-        'apps': 'Приложения',
-        'sites': 'Сайты',
-        'videos': 'Видео',
-        'app_sessions': 'Сессии приложений',
-        'page_sessions': 'Сессии страниц',
-        'view_sessions': 'Сессии просмотров',
-        'ALL_TABLES': 'ВСЕ ТАБЛИЦЫ'
-    };
-
-    switch(operationType) {
-        case 'ALL_TABLES':
-            return `⚠️ ВНИМАНИЕ!\n\nВы собираетесь удалить ВСЕ данные из ВСЕХ таблиц:\n` +
-                   `• Все приложения\n• Все сайты\n• Все видео\n` +
-                   `• Все сессии приложений\n• Все сессии страниц\n• Все сессии просмотров\n\n` +
-                   `Это действие НЕОБРАТИМО!\n\nПродолжить?`;
-
-        case 'ALL_FROM_TABLE':
-            return `Вы собираетесь удалить ВСЕ записи из таблицы "${tableNames[selectedTable]}".\n\n` +
-                   `Это действие НЕОБРАТИМО!\n\nПродолжить?`;
-
-        case 'SINGLE_RECORD':
-            return `Удалить запись с ID "${id}" из таблицы "${tableNames[selectedTable]}"?`;
-
-        default:
-            return 'Вы уверены?';
-    }
-}
-
-// Обновление UI
-function updateDeleteUI() {
-    const tableSelect = document.getElementById('deleteTableSelect');
-    const idInput = document.getElementById('idInput');
-    const deleteSpecificSection = document.getElementById('deleteSpecificSection');
-    const deleteAllSection = document.getElementById('deleteAllSection');
-    const generalWarning = document.getElementById('generalWarning');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const deletePreview = document.getElementById('deletePreview');
-
-    const selectedValue = tableSelect ? tableSelect.value : '';
-    const id = idInput ? idInput.value.trim() : '';
-
-    // Показываем/скрываем секции
-    if (selectedValue === 'ALL_TABLES') {
-        deleteSpecificSection.style.display = 'none';
-        deleteAllSection.style.display = 'block';
-        if (generalWarning) generalWarning.style.display = 'block';
-        if (deleteBtn) deleteBtn.disabled = false;
-        if (deletePreview) deletePreview.style.display = 'none';
-    } else if (selectedValue) {
-        deleteSpecificSection.style.display = 'block';
-        deleteAllSection.style.display = 'none';
-
-        // Устанавливаем подсказку в placeholder
-        if (idInput) {
-            const placeholders = {
-                'app_sessions': 'Введите ID сессии (число)',
-                'page_sessions': 'Введите ID сессии (число)',
-                'view_sessions': 'Введите ID сессии (число)',
-                'apps': 'Введите имя процесса (chrome.exe)',
-                'sites': 'Введите домен (youtube.com)',
-                'videos': 'Введите ID видео (dQw4w9WgXcQ)'
-            };
-            idInput.placeholder = placeholders[selectedValue] || 'Введите ID';
-        }
-
-        if (generalWarning) {
-            generalWarning.style.display = id ? 'none' : 'block';
-        }
-
-        if (deleteBtn) {
-            deleteBtn.disabled = false;
-        }
-
-        // Обновляем предпросмотр
-        updateDeletePreview(selectedValue, id);
-    } else {
-        deleteSpecificSection.style.display = 'none';
-        deleteAllSection.style.display = 'none';
-        if (generalWarning) generalWarning.style.display = 'none';
-        if (deleteBtn) deleteBtn.disabled = true;
-        if (deletePreview) deletePreview.style.display = 'none';
-    }
-}
-
-// Обновление предпросмотра удаления
-async function updateDeletePreview(tableName, id) {
-    const deletePreview = document.getElementById('deletePreview');
-    const previewText = document.getElementById('previewText');
-
-    if (!deletePreview || !previewText) return;
-
-    if (!tableName || tableName === 'ALL_TABLES') {
-        deletePreview.style.display = 'none';
-        return;
+    // Определение типа операции
+    function getOperationType(selectedTable, id) {
+        if (selectedTable === 'ALL_TABLES') return 'ALL_TABLES';
+        if (!id) return 'ALL_FROM_TABLE';
+        return 'SINGLE_RECORD';
     }
 
-    try {
-        if (!id) {
-            // Предпросмотр удаления ВСЕХ записей из таблицы
-            const count = await getRecordCount(tableName);
-            previewText.innerHTML = `
-                <strong>Будет удалено: ${count} записей</strong><br>
-                <small>Из таблицы: ${tableName}</small>
-            `;
-            deletePreview.style.display = 'block';
-        } else {
-            // Предпросмотр удаления конкретной записи
-            const record = await getRecordInfo(tableName, id);
-            if (record) {
-                previewText.innerHTML = `
-                    <strong>Будет удалена 1 запись:</strong><br>
-                    <small>ID: ${id}</small><br>
-                    <pre style="font-size: 12px; margin-top: 10px;">${JSON.stringify(record, null, 2)}</pre>
-                `;
-            } else {
-                previewText.innerHTML = `❌ Запись с ID "${id}" не найдена`;
-            }
-            deletePreview.style.display = 'block';
-        }
-    } catch (error) {
-        previewText.innerHTML = '⚠️ Не удалось загрузить информацию';
-        deletePreview.style.display = 'block';
-    }
-}
+    // Сообщения для подтверждения
+    function getConfirmMessage(selectedTable, id, operationType) {
+        const tableNames = {
+            'apps': 'Приложения',
+            'sites': 'Сайты',
+            'videos': 'Видео',
+            'app_sessions': 'Сессии приложений',
+            'page_sessions': 'Сессии страниц',
+            'view_sessions': 'Сессии просмотров',
+            'ALL_TABLES': 'ВСЕ ТАБЛИЦЫ'
+        };
 
-// Получение количества записей
-async function getRecordCount(tableName) {
-    try {
-        let endpoint;
-        switch(tableName) {
-            case 'app_sessions': endpoint = '/api/sessions/app'; break;
-            case 'page_sessions': endpoint = '/api/sessions/page'; break;
-            case 'view_sessions': endpoint = '/api/sessions/view'; break;
-            case 'apps': endpoint = '/api/apps'; break;
-            case 'sites': endpoint = '/api/sites'; break;
-            case 'videos': endpoint = '/api/videos'; break;
-            default: return 0;
-        }
-
-        const response = await fetch(endpoint);
-        if (response.ok) {
-            const data = await response.json();
-            return data.length;
-        }
-        return 0;
-    } catch (error) {
-        console.error('Ошибка получения количества записей:', error);
-        return 0;
-    }
-}
-
-// Получение информации о записи
-async function getRecordInfo(tableName, id) {
-    try {
-        let endpoint;
-        switch(tableName) {
-            case 'app_sessions': endpoint = `/api/sessions/app/${id}`; break;
-            case 'page_sessions': endpoint = `/api/sessions/page/${id}`; break;
-            case 'view_sessions': endpoint = `/api/sessions/view/${id}`; break;
-            case 'apps': endpoint = `/api/apps/${id}`; break;
-            case 'sites': endpoint = `/api/sites/${id}`; break;
-            case 'videos': endpoint = `/api/videos/${id}`; break;
-            default: return null;
-        }
-
-        const response = await fetch(endpoint);
-        if (response.ok) {
-            return await response.json();
-        }
-        return null;
-    } catch (error) {
-        console.error('Ошибка получения информации о записи:', error);
-        return null;
-    }
-}
-
-// Выполнение удаления
-async function performDelete(tableName, id, operationType) {
-    try {
         switch(operationType) {
             case 'ALL_TABLES':
-                await clearAllTables();
-                return {
-                    success: true,
-                    message: 'Все таблицы успешно очищены'
-                };
+                return `⚠️ ВНИМАНИЕ!\n\nВы собираетесь удалить ВСЕ данные из ВСЕХ таблиц:\n` +
+                       `• Все приложения\n• Все сайты\n• Все видео\n` +
+                       `• Все сессии приложений\n• Все сессии страниц\n• Все сессии просмотров\n\n` +
+                       `Это действие НЕОБРАТИМО!\n\nПродолжить?`;
 
             case 'ALL_FROM_TABLE':
-                await clearTable(tableName);
-                return {
-                    success: true,
-                    message: `Все записи удалены из таблицы ${tableName}`
-                };
+                return `Вы собираетесь удалить ВСЕ записи из таблицы "${tableNames[selectedTable]}".\n\n` +
+                       `Это действие НЕОБРАТИМО!\n\nПродолжить?`;
 
             case 'SINGLE_RECORD':
-                await deleteSingleRecord(tableName, id);
-                return {
-                    success: true,
-                    message: `Запись "${id}" удалена из таблицы ${tableName}`
-                };
+                return `Удалить запись с ID "${id}" из таблицы "${tableNames[selectedTable]}"?`;
 
             default:
-                throw new Error('Неизвестный тип операции');
+                return 'Вы уверены?';
         }
-    } catch (error) {
-        return {
-            success: false,
-            message: error.message || 'Ошибка при удалении'
-        };
-    }
-}
-
-// Удаление одной записи
-async function deleteSingleRecord(tableName, id) {
-    let endpoint;
-
-    switch(tableName) {
-        case 'app_sessions': endpoint = `/api/sessions/app/${id}`; break;
-        case 'page_sessions': endpoint = `/api/sessions/page/${id}`; break;
-        case 'view_sessions': endpoint = `/api/sessions/view/${id}`; break;
-        case 'apps': endpoint = `/api/apps/${id}`; break;
-        case 'sites': endpoint = `/api/sites/${id}`; break;
-        case 'videos': endpoint = `/api/videos/${id}`; break;
-        default: throw new Error(`Неизвестная таблица: ${tableName}`);
     }
 
-    const response = await fetch(endpoint, { method: 'DELETE' });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `Ошибка ${response.status}`);
-    }
-}
-
-// Очистка всей таблицы
-async function clearTable(tableName) {
-    try {
-        switch(tableName) {
-            case 'view_sessions':
-                const viewSessions = await fetch('/api/sessions/view').then(r => r.json());
-                for (const session of viewSessions) {
-                    await fetch(`/api/sessions/view/${session.id}`, { method: 'DELETE' });
-                }
-                break;
-
-            case 'page_sessions':
-                const pageSessions = await fetch('/api/sessions/page').then(r => r.json());
-                for (const session of pageSessions) {
-                    await fetch(`/api/sessions/page/${session.id}`, { method: 'DELETE' });
-                }
-                break;
-
-            case 'app_sessions':
-                const appSessions = await fetch('/api/sessions/app').then(r => r.json());
-                for (const session of appSessions) {
-                    await fetch(`/api/sessions/app/${session.id}`, { method: 'DELETE' });
-                }
-                break;
-
-            case 'videos':
-                const videos = await fetch('/api/videos').then(r => r.json());
-                for (const video of videos) {
-                    await fetch(`/api/videos/${video.videoId}`, { method: 'DELETE' });
-                }
-                break;
-
-            case 'sites':
-                const sites = await fetch('/api/sites').then(r => r.json());
-                for (const site of sites) {
-                    await fetch(`/api/sites/${site.domain}`, { method: 'DELETE' });
-                }
-                break;
-
-            case 'apps':
-                const apps = await fetch('/api/apps').then(r => r.json());
-                for (const app of apps) {
-                    await fetch(`/api/apps/${app.processName}`, { method: 'DELETE' });
-                }
-                break;
-        }
-
-    } catch (error) {
-        throw new Error(`Ошибка очистки таблицы ${tableName}: ${error.message}`);
-    }
-}
-
-// Очистка всех таблиц
-async function clearAllTables() {
-    const tables = ['view_sessions', 'page_sessions', 'app_sessions', 'videos', 'sites', 'apps'];
-    const errors = [];
-
-    for (const table of tables) {
+    // Выполнение удаления
+    async function performDelete(tableName, id, operationType) {
         try {
-            await clearTable(table);
+            switch(operationType) {
+                case 'ALL_TABLES':
+                    await clearAllTables();
+                    return {
+                        success: true,
+                        message: 'Все таблицы успешно очищены'
+                    };
+
+                case 'ALL_FROM_TABLE':
+                    await clearTable(tableName);
+                    return {
+                        success: true,
+                        message: `Все записи удалены из таблицы ${tableName}`
+                    };
+
+                case 'SINGLE_RECORD':
+                    await deleteSingleRecord(tableName, id);
+                    return {
+                        success: true,
+                        message: `Запись "${id}" удалена из таблицы ${tableName}`
+                    };
+
+                default:
+                    throw new Error('Неизвестный тип операции');
+            }
         } catch (error) {
-            errors.push(`${table}: ${error.message}`);
-            // Продолжаем очистку остальных таблиц
+            return {
+                success: false,
+                message: error.message || 'Ошибка при удалении'
+            };
         }
     }
 
-    if (errors.length > 0) {
-        throw new Error(`Ошибки при очистке: ${errors.join('; ')}`);
-    }
-}
+    // Удаление одной записи
+    async function deleteSingleRecord(tableName, id) {
+        const endpoints = {
+            'app_sessions': `/api/sessions/app/${id}`,
+            'page_sessions': `/api/sessions/page/${id}`,
+            'view_sessions': `/api/sessions/view/${id}`,
+            'apps': `/api/apps/${id}`,
+            'sites': `/api/sites/${id}`,
+            'videos': `/api/videos/${id}`
+        };
 
-// Функция changeDeleteTable для HTML (оставляем для совместимости)
+        const endpoint = endpoints[tableName];
+        if (!endpoint) throw new Error(`Неизвестная таблица: ${tableName}`);
+
+        const response = await fetch(endpoint, { method: 'DELETE' });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Ошибка ${response.status}`);
+        }
+    }
+
+    // Очистка всей таблицы
+    async function clearTable(tableName) {
+        console.log(`Очистка таблицы: ${tableName}`);
+
+        // Конфигурация таблиц
+        const tableConfig = {
+            'view_sessions': { endpoint: '/api/sessions/view', idField: 'viewId' },
+            'page_sessions': { endpoint: '/api/sessions/page', idField: 'sessionId' },
+            'app_sessions': { endpoint: '/api/sessions/app', idField: 'sessionId' },
+            'videos': { endpoint: '/api/videos', idField: 'videoId' },
+            'sites': { endpoint: '/api/sites', idField: 'domain' },
+            'apps': { endpoint: '/api/apps', idField: 'processName' }
+        };
+
+        const config = tableConfig[tableName];
+        if (!config) throw new Error(`Неизвестная таблица: ${tableName}`);
+
+        try {
+            // Получаем все записи
+            const data = await fetch(config.endpoint).then(r => r.json());
+            console.log(`Найдено записей: ${data.length}`);
+
+            // Удаляем каждую запись
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+                const idValue = item[config.idField];
+
+                if (idValue) {
+                    console.log(`[${i+1}/${data.length}] Удаление ${idValue}`);
+                    await fetch(`${config.endpoint}/${idValue}`, { method: 'DELETE' });
+                    await new Promise(r => setTimeout(r, 1));
+                }
+            }
+
+        } catch (error) {
+            console.log(`Ошибка очистки:`, error);
+            throw error;
+        }
+    }
+
+    // Очистка всех таблиц
+    async function clearAllTables() {
+        const tables = ['view_sessions', 'page_sessions', 'app_sessions', 'videos', 'sites', 'apps'];
+        const errors = [];
+
+        for (const table of tables) {
+            try {
+                await clearTable(table);
+            } catch (error) {
+                errors.push(`${table}: ${error.message}`);
+            }
+        }
+
+        if (errors.length > 0) {
+            console.log(`Ошибки при очистке: ${errors.join('; ')}`);
+        }
+    }
+});
+
+// Функция для HTML (оставляем для совместимости)
 function changeDeleteTable() {
-    updateDeleteUI();
+    // Эта функция вызывается из HTML, она просто обновляет UI
+    document.dispatchEvent(new Event('deleteTableChange'));
 }
 
 window.loadAppTable = loadAppTable;
@@ -1794,10 +1772,6 @@ window.loadAppTimeStatsCompact = loadAppTimeStatsCompact;
 window.loadSiteTableCompact = loadSiteTableCompact;
 window.loadSiteTimeStatsCompact = loadSiteTimeStatsCompact;
 window.loadYouTubeTableCompact = loadYouTubeTableCompact;
-
-
-
-
 
 
 
