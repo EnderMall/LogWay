@@ -78,7 +78,12 @@ public class ReferenceController{
 
     @PostMapping("/sites")
     public ResponseEntity<Site> createSite(@RequestBody Site site) {
-        return ResponseEntity.ok(siteRepository.save(site));
+        Optional<Site> existing = siteRepository.findById(site.getDomain());
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(existing.get());
+        }
+        Site saved = siteRepository.save(site);
+        return ResponseEntity.ok(saved);
     }
 
 
@@ -111,7 +116,13 @@ public class ReferenceController{
 
     @PostMapping("/videos")
     public ResponseEntity<YouTubeVideo> createVideo(@RequestBody YouTubeVideo video) {
-        return ResponseEntity.ok(videoRepository.save(video));
+        Optional<YouTubeVideo> existing = videoRepository.findById(video.getVideoId());
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(existing.get());
+        }
+
+        YouTubeVideo saved = videoRepository.save(video);
+        return ResponseEntity.ok(videoRepository.save(saved));
     }
 
 

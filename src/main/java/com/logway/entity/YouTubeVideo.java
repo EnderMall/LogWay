@@ -28,8 +28,36 @@ public class YouTubeVideo {
     @Column(name = "video_duration",nullable = false)
     private Integer videoDuration;
 
-    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<ViewSession> viewSessions = new ArrayList<>();
 
+    public String getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public Integer getVideoDuration() {
+        return videoDuration;
+    }
+
+    public void setVideoDuration(Integer videoDuration) {
+        this.videoDuration = videoDuration;
+    }
 }

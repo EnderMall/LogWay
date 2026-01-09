@@ -1,5 +1,6 @@
 package com.logway.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -44,4 +45,67 @@ public class ViewSession {
     @JoinColumn(name = "video_id", nullable = false)
     private YouTubeVideo video;
 
+    public Long getViewId() {
+        return viewId;
+    }
+
+    public void setViewId(Long viewId) {
+        this.viewId = viewId;
+    }
+
+    public LocalDate getActivationDate() {
+        return activationDate;
+    }
+
+    public void setActivationDate(LocalDate activationDate) {
+        this.activationDate = activationDate;
+    }
+
+    public LocalTime getActivationTime() {
+        return activationTime;
+    }
+
+    public void setActivationTime(LocalTime activationTime) {
+        this.activationTime = activationTime;
+    }
+
+    public LocalDate getShutdownDate() {
+        return shutdownDate;
+    }
+
+    public void setShutdownDate(LocalDate shutdownDate) {
+        this.shutdownDate = shutdownDate;
+    }
+
+    public LocalTime getShutdownTime() {
+        return shutdownTime;
+    }
+
+    public void setShutdownTime(LocalTime shutdownTime) {
+        this.shutdownTime = shutdownTime;
+    }
+
+    public Integer getViewingTime() {
+        return viewingTime;
+    }
+
+    public void setViewingTime(Integer viewingTime) {
+        this.viewingTime = viewingTime;
+    }
+
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
+    }
+
+    public YouTubeVideo getVideo() {
+        return video;
+    }
+
+    public void setVideo(YouTubeVideo video) {
+        this.video = video;
+    }
 }

@@ -24,13 +24,21 @@ public class App {
     @Column(name = "base_name")
     private String baseName;
 
-    @OneToMany(mappedBy = "app", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<AppSession> appSessions = new ArrayList<>();
-
-    @OneToMany(mappedBy = "browser", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<PageSession> pageSessionsAsBrowser = new ArrayList<>();
 
 
+    public String getProcessName() {
+        return processName;
+    }
+
+    public void setProcessName(String processName) {
+        this.processName = processName;
+    }
+
+    public String getBaseName() {
+        return baseName;
+    }
+
+    public void setBaseName(String baseName) {
+        this.baseName = baseName;
+    }
 }

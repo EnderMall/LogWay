@@ -1,5 +1,6 @@
 package com.logway.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -39,4 +40,59 @@ public class AppSession {
     @JoinColumn(name = "process_name", nullable = false)
     private App app;
 
+    public Long getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(Long sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public LocalDate getActivationDate() {
+        return activationDate;
+    }
+
+    public void setActivationDate(LocalDate activationDate) {
+        this.activationDate = activationDate;
+    }
+
+    public LocalTime getActivationTime() {
+        return activationTime;
+    }
+
+    public void setActivationTime(LocalTime activationTime) {
+        this.activationTime = activationTime;
+    }
+
+    public LocalDate getShutdownDate() {
+        return shutdownDate;
+    }
+
+    public void setShutdownDate(LocalDate shutdownDate) {
+        this.shutdownDate = shutdownDate;
+    }
+
+    public LocalTime getShutdownTime() {
+        return shutdownTime;
+    }
+
+    public void setShutdownTime(LocalTime shutdownTime) {
+        this.shutdownTime = shutdownTime;
+    }
+
+    public String getWindowTitle() {
+        return windowTitle;
+    }
+
+    public void setWindowTitle(String windowTitle) {
+        this.windowTitle = windowTitle;
+    }
+
+    public App getApp() {
+        return app;
+    }
+
+    public void setApp(App app) {
+        this.app = app;
+    }
 }

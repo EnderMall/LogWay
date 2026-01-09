@@ -19,12 +19,13 @@ public class Site {
     @Column(name = "domain",nullable = false)
     private String domain;
 
-    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<PageSession> pageSessions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<ViewSession> viewSessions = new ArrayList<>();
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
 
 }

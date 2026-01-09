@@ -1,9 +1,6 @@
 package com.logway.controller;
 
-import com.logway.entity.App;
-import com.logway.entity.AppSession;
-import com.logway.entity.PageSession;
-import com.logway.entity.ViewSession;
+import com.logway.entity.*;
 import com.logway.repository.*;
 import com.logway.service.SessionService;
 import org.springframework.http.ResponseEntity;
@@ -20,17 +17,23 @@ public class SessionController {
     private final ViewSessionRepository viewSessionRepository;
     private final SessionService sessionService;
     private final AppRepository appRepository;
+    private final SiteRepository siteRepository;
+    private final YouTubeVideoRepository videoRepository;
 
 
     public SessionController(AppSessionRepository appSessionRepository,
                              PageSessionRepository pageSessionRepository,
                              ViewSessionRepository viewSessionRepository,
-                             SessionService sessionService,AppRepository appRepository) {
+                             SessionService sessionService,AppRepository appRepository,
+                             SiteRepository siteRepository,
+                             YouTubeVideoRepository videoRepository) {
         this.appSessionRepository = appSessionRepository;
         this.pageSessionRepository = pageSessionRepository;
         this.viewSessionRepository = viewSessionRepository;
         this.sessionService = sessionService;
         this.appRepository = appRepository;
+        this.siteRepository = siteRepository;
+        this.videoRepository = videoRepository;
     }
 
     @GetMapping("/app")
@@ -89,7 +92,36 @@ public class SessionController {
 
     @PostMapping("/page")
     public ResponseEntity<PageSession> createPageSession(@RequestBody PageSession session) {
-        return ResponseEntity.ok(sessionService.savePageSession(session));
+        String domain = session.getSite().getDomain();
+        Optional<Site> existingSite = siteRepository.findById(domain);
+
+        if (existingSite.isEmpty()) {
+            Site newSite = new Site();
+            newSite.setDomain(domain);
+
+            Site savedSite = siteRepository.save(newSite);
+            session.setSite(savedSite);
+        } else {
+            session.setSite(existingSite.get());
+        }
+
+        String processName = session.getBrowser().getProcessName();
+        Optional<App> existingApp = appRepository.findById(processName);
+
+        if (existingApp.isEmpty()) {
+            App newApp = new App();
+            newApp.setProcessName(processName);
+            newApp.setBaseName(processName);
+
+
+            App savedApp = appRepository.save(newApp);
+            session.setBrowser(savedApp);
+        } else {
+            session.setBrowser(existingApp.get());
+        }
+
+        PageSession saved = sessionService.savePageSession(session);
+        return ResponseEntity.ok(saved);
     }
 
 
@@ -117,7 +149,35 @@ public class SessionController {
 
     @PostMapping("/view")
     public ResponseEntity<ViewSession> createViewSession(@RequestBody ViewSession session) {
-        return ResponseEntity.ok(sessionService.saveViewSession(session));
+        String domain = session.getSite().getDomain();
+        Optional<Site> existingSite = siteRepository.findById(domain);
+
+        if (existingSite.isEmpty()) {
+            Site newSite = new Site();
+            newSite.setDomain(domain);
+            Site savedSite = siteRepository.save(newSite);
+            session.setSite(savedSite);
+        } else {
+            session.setSite(existingSite.get());
+        }
+
+        String videoId = session.getVideo().getVideoId();
+        Optional<YouTubeVideo> existingVideo = videoRepository.findById(videoId);
+
+        if (existingVideo.isEmpty()) {
+            YouTubeVideo newVideo = new YouTubeVideo();
+            newVideo.setVideoId(session.getVideo().getVideoId());
+            newVideo.setTitle("Unknown");
+            newVideo.setAuthor("Unknown");
+            newVideo.setVideoDuration(session.getViewingTime());
+
+            YouTubeVideo savedVideo = videoRepository.save(newVideo);
+            session.setVideo(savedVideo);
+        } else {
+            session.setVideo(existingVideo.get());
+        }
+        ViewSession saved = sessionService.saveViewSession(session);
+        return ResponseEntity.ok(saved);
     }
 
 
