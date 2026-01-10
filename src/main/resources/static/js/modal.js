@@ -201,13 +201,13 @@ function showDataModal() {
     resetForm();
 }
 
-// Закрыть модалку
+
 function closeDataModal() {
     console.log('closeDataModal called');
     document.getElementById('dataModal').style.display = 'none';
 }
 
-// Сбросить форму
+
 function resetForm() {
     console.log('resetForm called');
     document.getElementById('dataForm').reset();
@@ -216,7 +216,7 @@ function resetForm() {
         '<p class="hint">Выберите таблицу для отображения полей</p>';
 }
 
-// Изменить поля при выборе таблицы
+
 function changeTable() {
     console.log('changeTable called');
     const table = document.getElementById('tableSelect').value;
@@ -396,11 +396,9 @@ function changeTable() {
     formFields.innerHTML = fieldsHtml;
 }
 
-// Инициализация обработчиков
 function initModalHandlers() {
     console.log('Initializing modal handlers...');
 
-    // 1. Кнопка открытия модалки
     const openBtn = document.getElementById('openDataModal');
     if (openBtn) {
         openBtn.addEventListener('click', showDataModal);
@@ -411,21 +409,19 @@ function initModalHandlers() {
 
 
 
-    // 3. Кнопка отмены
     const cancelBtn = document.getElementById('cancelBtn');
     if (cancelBtn) {
         cancelBtn.addEventListener('click', closeDataModal);
         console.log('Cancel button handler attached');
     }
 
-    // 4. Кнопка сохранения
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', saveData);
         console.log('Save button handler attached');
     }
 
-    // 5. Select для изменения таблицы
+
     const tableSelect = document.getElementById('tableSelect');
     if (tableSelect) {
         tableSelect.addEventListener('change', changeTable);
@@ -433,7 +429,7 @@ function initModalHandlers() {
     }
 
 
-    // 7. Закрытие по клавише Escape
+
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeDataModal();
@@ -476,14 +472,13 @@ async function loadAppTable(event) {
             return;
         }
 
-        // Сортируем новые сверху
+
         sessions.sort((a, b) => {
             const dateA = new Date(`${a.activationDate}T${a.activationTime}`);
             const dateB = new Date(`${b.activationDate}T${b.activationTime}`);
             return dateB - dateA;
         });
 
-        // Отображаем все записи
         let html = '';
         sessions.forEach(session => {
             const appName = session.app?.processName;
@@ -950,7 +945,7 @@ async function loadAppTableCompact(event) {
             return;
         }
 
-        // Сортируем новые сверху и берем только 5
+
         const top5Sessions = sessions.sort((a, b) => {
             const dateA = new Date(`${a.activationDate}T${a.activationTime}`);
             const dateB = new Date(`${b.activationDate}T${b.activationTime}`);
@@ -1462,9 +1457,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 
 
-// ===== МОДАЛКА УДАЛЕНИЯ (ПОЛНЫЙ КОД С ВЫБОРОМ) =====
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Элементы модалки
+
     const openDeleteModalBtn = document.getElementById('openDeleteModal');
     const deleteModal = document.getElementById('deleteModal');
     const deleteCancelBtn = document.getElementById('deleteCancelBtn');
@@ -1475,12 +1470,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteAllSection = document.getElementById('deleteAllSection');
     const generalWarning = document.getElementById('generalWarning');
 
-    // 1. Открытие модалки
+
     if (openDeleteModalBtn) {
         openDeleteModalBtn.addEventListener('click', function() {
             if (deleteModal) {
                 deleteModal.style.display = 'flex';
-                // Сброс формы
+
                 if (tableSelect) tableSelect.value = '';
                 if (idInput) idInput.value = '';
                 updateDeleteUI();
@@ -1488,7 +1483,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 2. Закрытие модалки
+
     function closeDeleteModal() {
         if (deleteModal) deleteModal.style.display = 'none';
     }
@@ -1497,14 +1492,12 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteCancelBtn.addEventListener('click', closeDeleteModal);
     }
 
-    // Закрытие по клику вне модалки
     if (deleteModal) {
         deleteModal.addEventListener('click', function(e) {
             if (e.target === deleteModal) closeDeleteModal();
         });
     }
 
-    // 3. Обновление UI при выборе таблицы
     if (tableSelect) {
         tableSelect.addEventListener('change', updateDeleteUI);
     }
@@ -1517,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedValue = tableSelect ? tableSelect.value : '';
         const id = idInput ? idInput.value.trim() : '';
 
-        // Показываем/скрываем секции
+
         if (selectedValue === 'ALL_TABLES') {
             if (deleteSpecificSection) deleteSpecificSection.style.display = 'none';
             if (deleteAllSection) deleteAllSection.style.display = 'block';
@@ -1527,7 +1520,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (deleteSpecificSection) deleteSpecificSection.style.display = 'block';
             if (deleteAllSection) deleteAllSection.style.display = 'none';
 
-            // Устанавливаем подсказку в placeholder
             if (idInput) {
                 const placeholders = {
                     'app_sessions': 'Введите ID сессии (число)',
@@ -1555,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 4. Обработчик удаления
+
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async function() {
             const selectedTable = tableSelect ? tableSelect.value : '';
@@ -1566,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Получаем тип операции
+
             const operationType = getOperationType(selectedTable, id);
             const confirmMessage = getConfirmMessage(selectedTable, id, operationType);
 
@@ -1574,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Блокируем кнопку
+
             deleteBtn.disabled = true;
             deleteBtn.textContent = 'Удаление...';
 
@@ -1584,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (result.success) {
                     closeDeleteModal();
-                    // Обновляем страницу если нужно
+
                     if (selectedTable.includes('_sessions')) {
                         setTimeout(() => location.reload(), 1000);
                     }
@@ -1599,16 +1591,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
-
-    // Определение типа операции
     function getOperationType(selectedTable, id) {
         if (selectedTable === 'ALL_TABLES') return 'ALL_TABLES';
         if (!id) return 'ALL_FROM_TABLE';
         return 'SINGLE_RECORD';
     }
 
-    // Сообщения для подтверждения
+
     function getConfirmMessage(selectedTable, id, operationType) {
         const tableNames = {
             'apps': 'Приложения',
@@ -1639,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Выполнение удаления
+
     async function performDelete(tableName, id, operationType) {
         try {
             switch(operationType) {
@@ -1675,7 +1664,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Удаление одной записи
+
     async function deleteSingleRecord(tableName, id) {
         const endpoints = {
             'app_sessions': `/api/sessions/app/${id}`,
@@ -1697,11 +1686,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Очистка всей таблицы
+
     async function clearTable(tableName) {
         console.log(`Очистка таблицы: ${tableName}`);
 
-        // Конфигурация таблиц
         const tableConfig = {
             'view_sessions': { endpoint: '/api/sessions/view', idField: 'viewId' },
             'page_sessions': { endpoint: '/api/sessions/page', idField: 'sessionId' },
@@ -1715,11 +1703,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!config) throw new Error(`Неизвестная таблица: ${tableName}`);
 
         try {
-            // Получаем все записи
+
             const data = await fetch(config.endpoint).then(r => r.json());
             console.log(`Найдено записей: ${data.length}`);
 
-            // Удаляем каждую запись
+
             for (let i = 0; i < data.length; i++) {
                 const item = data[i];
                 const idValue = item[config.idField];
@@ -1737,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Очистка всех таблиц
+
     async function clearAllTables() {
         const tables = ['view_sessions', 'page_sessions', 'app_sessions', 'videos', 'sites', 'apps'];
         const errors = [];
@@ -1756,9 +1744,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Функция для HTML (оставляем для совместимости)
+
 function changeDeleteTable() {
-    // Эта функция вызывается из HTML, она просто обновляет UI
     document.dispatchEvent(new Event('deleteTableChange'));
 }
 

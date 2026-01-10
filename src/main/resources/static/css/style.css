@@ -16,7 +16,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* HEADER */
+
 header {
   display: flex;
   justify-content: space-between;
@@ -82,7 +82,6 @@ header h1 {
   width: 15px;
 }
 
-/* MAIN LAYOUT */
 .main {
   background-color: #EDEDED;
   flex: 1;
