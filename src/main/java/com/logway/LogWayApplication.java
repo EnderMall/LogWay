@@ -53,7 +53,7 @@ public class LogWayApplication {
         SpringApplication.run(LogWayApplication.class, args);
 
         System.out.print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-        System.out.print("Сайт приложения открыт по адресу localhost:"+System.getProperty("Port"));
+        System.out.print("Сайт приложения открыт по адресу localhost:8080");
 
     }
 
