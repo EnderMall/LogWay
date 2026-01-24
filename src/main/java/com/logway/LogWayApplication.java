@@ -1,11 +1,8 @@
 package com.logway;
 
-import com.sun.tools.javac.Main;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import javax.sound.sampled.Port;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -17,27 +14,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Основной класс запуска приложения LogWay.
+ * Данный класс выполняет три критические функции:
+ * 1. Интерактивная настройка параметров доступа к БД при первом запуске.
+ * 2. Автоматическое создание базы данных и необходимых таблиц через JDBC.
+ * 3. Конфигурация свойств Spring Boot в реальном времени и запуск веб-контекста.
+ */
 @SpringBootApplication
 public class LogWayApplication {
 
+    /**
+     * Точка входа в приложение.
+     * Инициализирует пользовательские настройки, подготавливает БД и запускает Spring.
+     * @param args аргументы командной строки.
+     */
     public static void main(String[] args) {
         try {
             File file = new File("UserData.txt");
             if (!file.exists()) {
-                String dbUser = null;
-                String dbPassword = null;
-                String dbPort =null;
                 Scanner scanner = new Scanner(System.in);
 
                 System.out.println("=== Настройка LogWay ===");
                 System.out.print("Введите логин пользователя БД: ");
-                dbUser = scanner.nextLine();
+                String dbUser = scanner.nextLine();
 
                 System.out.print("Введите пароль пользователя БД: ");
-                dbPassword = scanner.nextLine();
+                String dbPassword = scanner.nextLine();
 
                 System.out.print("Введите порт для БД: ");
-                dbPort = scanner.nextLine();
+                String dbPort = scanner.nextLine();
                 scanner.close();
 
                 Files.writeString(Paths.get("UserData.txt"),"username="+dbUser+"\npassword="
@@ -57,7 +63,10 @@ public class LogWayApplication {
 
     }
 
-
+    /**
+     * Осуществляет проверку существования базы данных и её создание.
+     * Также динамически обновляет файл application.properties и системные свойства.
+     */
     public static void createDatabase(){
         try {
             List<String> ost = new ArrayList<>();
@@ -111,7 +120,11 @@ public class LogWayApplication {
             System.err.println(e.getMessage());
         }
     }
-
+    /**
+     * Создает структуру таблиц в базе данных, если они отсутствуют.
+     * Реализует схему данных для приложений, сайтов, видео и их сессий.
+     * @param conn активное соединение с целевой базой данных.
+     */
     private static void createTables(Connection conn) {
         try {
             Statement stmt = conn.createStatement();
